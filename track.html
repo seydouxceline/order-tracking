@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi de commande</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min-height: 100vh; }
+.header { background: #fff; border-bottom: 1px solid #efefef; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+.brand { font-size: 18px; font-weight: 600; }
+.container { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+.search-box { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 32px; margin-bottom: 24px; text-align: center; }
+.search-box h2 { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
+.search-box p { font-size: 14px; color: #888; margin-bottom: 24px; }
+.search-row { display: flex; gap: 10px; }
+.search-row input { flex: 1; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+.search-row input:focus { border-color: #111; }
+.btn { padding: 12px 24px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer; font-weight: 500; }
+.btn:hover { background: #333; }
+.card { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 28px; margin-bottom: 16px; }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.order-ref { font-size: 18px; font-weight: 600; }
+.order-date { font-size: 13px; color: #888; margin-top: 4px; }
+.badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge.confirmed { background: #e8f5e9; color: #2e7d32; }
+.badge.processing { background: #fff8e1; color: #f57f17; }
+.badge.shipped { background: #e3f2fd; color: #1565c0; }
+.badge.transit { background: #f3e5f5; color: #6a1b9a; }
+.badge.customs { background: #fff3e0; color: #e65100; }
+.badge.delivered { background: #e8f5e9; color: #1b5e20; }
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.step { display: flex; gap: 16px; position: relative; }
+.step-left { display: flex; flex-direction: column; align-items: center; }
+.step-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #e0e0e0; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
+.step-dot.done { background: #111; border-color: #111; color: #fff; }
+.step-dot.active { background: #fff; border-color: #111; color: #111; }
+.step-line { width: 2px; flex: 1; background: #e0e0e0; min-height: 24px; }
+.step-line.done { background: #111; }
+.step-content { padding-bottom: 24px; padding-top: 4px; }
+.step-title { font-size: 14px; font-weight: 500; }
+.step-title.done { color: #111; }
+.step-title.pending { color: #bbb; }
+.step-desc { font-size: 12px; color: #888; margin-top: 2px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.info-item label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
+.info-item span { font-size: 14px; font-weight: 500; }
+.error-msg { text-align: center; padding: 40px; color: #888; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="brand">Suivi de commande</span>
+</div>
+<div class="container">
+  <div class="search-box">
+    <h2>Suivre ma commande</h2>
+    <p>Entrez votre numéro de suivi ou de commande</p>
+    <div class="search-row">
+      <input type="text" id="trackInput" placeholder="ex: TRK-2026-00001" />
+      <button class="btn" onclick="searchOrder()">Rechercher</button>
+    </div>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
+
+const STEPS = [
+  { id: 'confirmed', label: 'Commande confirmée', desc: 'Votre commande a été reçue et validée.', icon: '✓' },
+  { id: 'processing', label: 'En préparation', desc: 'Votre colis est en cours de préparation.', icon: '⚙' },
+  { id: 'shipped', label: 'Expédiée', desc: 'Votre colis a quitté notre entrepôt.', icon: '📦' },
+  { id: 'transit', label: 'En transit', desc: 'Votre colis est en route.', icon: '✈' },
+  { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃' },
+  { id: 'delivered', label: 'Livrée', desc: 'Votre commande a été livrée.', icon: '🏠' }
+];
+
+const params = new URLSearchParams(window.location.search);
+const orderParam = params.get('order') || params.get('tracking');
+if (orderParam) {
+  document.getElementById('trackInput').value = orderParam;
+  searchOrder();
+}
+
+async function searchOrder() {
+  const val = document.getElementById('trackInput').value.trim();
+  if (!val) return;
+  document.getElementById('result').innerHTML = '<div class="error-msg">Recherche en cours...</div>';
+  
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?or=(tracking_id.eq.${val},order_number.eq.${val})&limit=1`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  const data = await res.json();
+  
+  if (!data.length) {
+    document.getElementById('result').innerHTML = '<div class="error-msg">Aucune commande trouvée avec ce numéro.</div>';
+    return;
+  }
+  renderOrder(data[0]);
+}
+
+function renderOrder(order) {
+  const currentIdx = STEPS.findIndex(s => s.id === order.status);
+  const stepsHtml = STEPS.map((step, i) => {
+    const isDone = i <= currentIdx;
+    const isActive = i === currentIdx;
+    const isLast = i === STEPS.length - 1;
+    return `
+      <div class="step">
+        <div class="step-left">
+          <div class="step-dot ${isDone ? 'done' : isActive ? 'active' : ''}">${isDone ? '✓' : step.icon}</div>
+          ${!isLast ? `<div class="step-line ${isDone ? 'done' : ''}"></div>` : ''}
+        </div>
+        <div class="step-content">
+          <div class="step-title ${isDone ? 'done' : 'pending'}">${step.label}</div>
+          ${isDone ? `<div class="step-desc">${step.desc}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('result').innerHTML = `
+    <div class="card">
+      <div class="order-header">
+        <div>
+          <div class="order-ref">#${order.order_number}</div>
+          <div class="order-date">Suivi: ${order.tracking_id}</div>
+        </div>
+        <span class="badge ${order.status}">${STEPS.find(s=>s.id===order.status)?.label || order.status}</span>
+      </div>
+      <div class="timeline">${stepsHtml}</div>
+      <div class="info-grid">
+        <div class="info-item"><label>Client</label><span>${order.customer_name || '-'}</span></div>
+        <div class="info-item"><label>Produit</label><span>${order.product_name || '-'}</span></div>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>

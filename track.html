@@ -74,7 +74,7 @@ const STEPS = [
   { id: 'processing', label: 'En préparation', desc: 'Votre colis est en cours de préparation.', icon: '⚙' },
   { id: 'shipped', label: 'Expédiée', desc: 'Votre colis a quitté notre entrepôt.', icon: '📦' },
   { id: 'transit', label: 'En transit', desc: 'Votre colis est en route.', icon: '✈' },
-  { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃' },
+  { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃', hidden: true },
   { id: 'delivered', label: 'Livrée', desc: 'Votre commande a été livrée.', icon: '🏠' }
 ];
 
@@ -104,7 +104,7 @@ async function searchOrder() {
 
 function renderOrder(order) {
   const currentIdx = STEPS.findIndex(s => s.id === order.status);
-  const stepsHtml = STEPS.map((step, i) => {
+  const stepsHtml = STEPS.filter(step => !step.hidden || step.id === order.status || STEPS.indexOf(step) <= currentIdx).map((step, i) => {
     const isDone = i <= currentIdx;
     const isActive = i === currentIdx;
     const isLast = i === STEPS.length - 1;

@@ -104,14 +104,14 @@ async function searchOrder() {
 
 function renderOrder(order) {
   const currentIdx = STEPS.findIndex(s => s.id === order.status);
-  const stepsHtml = STEPS.filter(step => !step.hidden || step.id === order.status || STEPS.indexOf(step) <= currentIdx).map((step, i) => {
+  const stepsHtml = STEPS.map((step, i) => {
+    if (step.hidden && order.status !== 'customs') return '';
     const isDone = i <= currentIdx;
-    const isActive = i === currentIdx;
     const isLast = i === STEPS.length - 1;
     return `
       <div class="step">
         <div class="step-left">
-          <div class="step-dot ${isDone ? 'done' : isActive ? 'active' : ''}">${isDone ? '✓' : step.icon}</div>
+          <div class="step-dot ${isDone ? 'done' : ''}">${isDone ? '✓' : step.icon}</div>
           ${!isLast ? `<div class="step-line ${isDone ? 'done' : ''}"></div>` : ''}
         </div>
         <div class="step-content">

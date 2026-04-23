@@ -35,7 +35,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .step-left { display: flex; flex-direction: column; align-items: center; }
 .step-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #e0e0e0; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
 .step-dot.done { background: #111; border-color: #111; color: #fff; }
-.step-dot.active { background: #fff; border-color: #111; color: #111; }
 .step-line { width: 2px; flex: 1; background: #e0e0e0; min-height: 24px; }
 .step-line.done { background: #111; }
 .step-content { padding-bottom: 24px; padding-top: 4px; }
@@ -69,12 +68,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
 
-const STEPS = [
+const ALL_STEPS = [
   { id: 'confirmed', label: 'Commande confirmée', desc: 'Votre commande a été reçue et validée.', icon: '✓' },
   { id: 'processing', label: 'En préparation', desc: 'Votre colis est en cours de préparation.', icon: '⚙' },
   { id: 'shipped', label: 'Expédiée', desc: 'Votre colis a quitté notre entrepôt.', icon: '📦' },
   { id: 'transit', label: 'En transit', desc: 'Votre colis est en route.', icon: '✈' },
-  { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃', hidden: true },
+  { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃' },
   { id: 'delivered', label: 'Livrée', desc: 'Votre commande a été livrée.', icon: '🏠' }
 ];
 
@@ -89,12 +88,10 @@ async function searchOrder() {
   const val = document.getElementById('trackInput').value.trim();
   if (!val) return;
   document.getElementById('result').innerHTML = '<div class="error-msg">Recherche en cours...</div>';
-  
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?or=(tracking_id.eq.${val},order_number.eq.${val})&limit=1`, {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
   });
   const data = await res.json();
-  
   if (!data.length) {
     document.getElementById('result').innerHTML = '<div class="error-msg">Aucune commande trouvée avec ce numéro.</div>';
     return;
@@ -103,9 +100,11 @@ async function searchOrder() {
 }
 
 function renderOrder(order) {
+  const showCustoms = order.status === 'customs';
+  const STEPS = showCustoms ? ALL_STEPS : ALL_STEPS.filter(s => s.id !== 'customs');
   const currentIdx = STEPS.findIndex(s => s.id === order.status);
+
   const stepsHtml = STEPS.map((step, i) => {
-    if (step.hidden && order.status !== 'customs') return '';
     const isDone = i <= currentIdx;
     const isLast = i === STEPS.length - 1;
     return `

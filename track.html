@@ -5,22 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Suivi de commande</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min-height: 100vh; }
 .header { background: #fff; border-bottom: 1px solid #efefef; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .brand { font-size: 18px; font-weight: 600; }
-.container { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+.container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
 .search-box { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 32px; margin-bottom: 24px; text-align: center; }
 .search-box h2 { font-size: 20px; font-weight: 500; margin-bottom: 8px; }
 .search-box p { font-size: 14px; color: #888; margin-bottom: 24px; }
-.search-row { display: flex; gap: 10px; }
+.search-row { display: flex; gap: 10px; max-width: 480px; margin: 0 auto; }
 .search-row input { flex: 1; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
 .search-row input:focus { border-color: #111; }
 .btn { padding: 12px 24px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer; font-weight: 500; }
 .btn:hover { background: #333; }
 .card { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 28px; margin-bottom: 16px; }
-.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
 .order-ref { font-size: 18px; font-weight: 600; }
 .order-date { font-size: 13px; color: #888; margin-top: 4px; }
 .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
@@ -30,22 +32,31 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .badge.transit { background: #f3e5f5; color: #6a1b9a; }
 .badge.customs { background: #fff3e0; color: #e65100; }
 .badge.delivered { background: #e8f5e9; color: #1b5e20; }
+.main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+#map { height: 340px; border-radius: 10px; border: 1px solid #efefef; z-index: 1; }
 .timeline { display: flex; flex-direction: column; gap: 0; }
-.step { display: flex; gap: 16px; position: relative; }
+.step { display: flex; gap: 14px; position: relative; }
 .step-left { display: flex; flex-direction: column; align-items: center; }
-.step-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #e0e0e0; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; z-index: 1; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e0e0e0; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
 .step-dot.done { background: #111; border-color: #111; color: #fff; }
-.step-line { width: 2px; flex: 1; background: #e0e0e0; min-height: 24px; }
+.step-line { width: 2px; flex: 1; background: #e0e0e0; min-height: 20px; }
 .step-line.done { background: #111; }
-.step-content { padding-bottom: 24px; padding-top: 4px; }
-.step-title { font-size: 14px; font-weight: 500; }
+.step-content { padding-bottom: 20px; padding-top: 2px; }
+.step-title { font-size: 13px; font-weight: 500; }
 .step-title.done { color: #111; }
 .step-title.pending { color: #bbb; }
-.step-desc { font-size: 12px; color: #888; margin-top: 2px; }
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-.info-item label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
-.info-item span { font-size: 14px; font-weight: 500; }
+.step-desc { font-size: 11px; color: #888; margin-top: 2px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+.info-item label { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
+.info-item span { font-size: 13px; font-weight: 500; }
 .error-msg { text-align: center; padding: 40px; color: #888; }
+.status-banner { background: #f9f9f9; border: 1px solid #efefef; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.status-banner .dot { width: 8px; height: 8px; border-radius: 50%; background: #4caf50; flex-shrink: 0; }
+.status-banner.orange .dot { background: #ff9800; }
+@media (max-width: 680px) {
+  .main-layout { grid-template-columns: 1fr; }
+  #map { height: 220px; }
+}
 </style>
 </head>
 <body>
@@ -70,12 +81,32 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const ALL_STEPS = [
   { id: 'confirmed', label: 'Commande confirmée', desc: 'Votre commande a été reçue et validée.', icon: '✓' },
-  { id: 'processing', label: 'En préparation', desc: 'Votre colis est en cours de préparation.', icon: '⚙' },
-  { id: 'shipped', label: 'Expédiée', desc: 'Votre colis a quitté notre entrepôt.', icon: '📦' },
-  { id: 'transit', label: 'En transit', desc: 'Votre colis est en route.', icon: '✈' },
+  { id: 'processing', label: 'En préparation', desc: 'Votre colis est en cours de préparation à Istanbul.', icon: '⚙' },
+  { id: 'shipped', label: 'Expédiée', desc: 'Votre colis a quitté Istanbul.', icon: '📦' },
+  { id: 'transit', label: 'En transit', desc: 'Votre colis est en route vers la France.', icon: '✈' },
   { id: 'customs', label: 'En douane', desc: 'Votre colis est en cours de dédouanement.', icon: '🛃' },
   { id: 'delivered', label: 'Livrée', desc: 'Votre commande a été livrée.', icon: '🏠' }
 ];
+
+const ROUTE_COORDS = [
+  { status: ['confirmed', 'processing'], lat: 41.0082, lng: 28.9784, label: 'Istanbul' },
+  { status: ['shipped'], lat: 42.5, lng: 23.0, label: 'En route' },
+  { status: ['transit'], lat: 48.8, lng: 9.2, label: 'Frankfurt' },
+  { status: ['customs'], lat: 48.5, lng: 7.7, label: 'Douane — Strasbourg' },
+  { status: ['delivered'], lat: 46.2276, lng: 2.2137, label: 'France' }
+];
+
+const ROUTE_PATH = [
+  [41.0082, 28.9784],
+  [42.5, 23.0],
+  [44.0, 17.0],
+  [46.0, 13.0],
+  [48.8, 9.2],
+  [48.5, 7.7],
+  [46.2276, 2.2137]
+];
+
+let mapInstance = null;
 
 const params = new URLSearchParams(window.location.search);
 const orderParam = params.get('order') || params.get('tracking');
@@ -88,6 +119,7 @@ async function searchOrder() {
   const val = document.getElementById('trackInput').value.trim();
   if (!val) return;
   document.getElementById('result').innerHTML = '<div class="error-msg">Recherche en cours...</div>';
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?or=(tracking_id.eq.${val},order_number.eq.${val})&limit=1`, {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
   });
@@ -99,10 +131,19 @@ async function searchOrder() {
   renderOrder(data[0]);
 }
 
+function getMapPosition(status) {
+  for (const point of ROUTE_COORDS) {
+    if (point.status.includes(status)) return point;
+  }
+  return ROUTE_COORDS[0];
+}
+
 function renderOrder(order) {
   const showCustoms = order.status === 'customs';
   const STEPS = showCustoms ? ALL_STEPS : ALL_STEPS.filter(s => s.id !== 'customs');
   const currentIdx = STEPS.findIndex(s => s.id === order.status);
+  const currentStep = ALL_STEPS.find(s => s.id === order.status);
+  const isCustoms = order.status === 'customs';
 
   const stepsHtml = STEPS.map((step, i) => {
     const isDone = i <= currentIdx;
@@ -120,6 +161,8 @@ function renderOrder(order) {
       </div>`;
   }).join('');
 
+  const mapPos = getMapPosition(order.status);
+
   document.getElementById('result').innerHTML = `
     <div class="card">
       <div class="order-header">
@@ -129,12 +172,30 @@ function renderOrder(order) {
         </div>
         <span class="badge ${order.status}">${STEPS.find(s=>s.id===order.status)?.label || order.status}</span>
       </div>
-      <div class="timeline">${stepsHtml}</div>
+      <div class="status-banner ${isCustoms ? 'orange' : ''}">
+        <div class="dot"></div>
+        <span>${isCustoms ? 'Colis retenu en douane — traitement en cours' : 'Colis en cours d\'acheminement — Istanbul → France'}</span>
+      </div>
+      <div class="main-layout">
+        <div id="map"></div>
+        <div class="timeline">${stepsHtml}</div>
+      </div>
       <div class="info-grid">
         <div class="info-item"><label>Client</label><span>${order.customer_name || '-'}</span></div>
         <div class="info-item"><label>Produit</label><span>${order.product_name || '-'}</span></div>
       </div>
     </div>`;
+
+  setTimeout(() => {
+    mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([mapPos.lat, mapPos.lng], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(mapInstance);
+    L.polyline(ROUTE_PATH, { color: '#111', weight: 2, opacity: 0.3, dashArray: '6,6' }).addTo(mapInstance);
+    const icon = L.divIcon({
+      html: `<div style="width:14px;height:14px;background:${isCustoms ? '#ff9800' : '#111'};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+      className: '', iconAnchor: [7, 7]
+    });
+    L.marker([mapPos.lat, mapPos.lng], { icon }).addTo(mapInstance).bindPopup(mapPos.label).openPopup();
+  }, 100);
 }
 </script>
 </body>

@@ -4,45 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Suivi commandes</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min-height: 100vh; }
+
 .header { background: #111; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-.brand { font-size: 16px; font-weight: 500; color: #fff; }
-.container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+.brand { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: #fff; }
+
+.container { max-width: 960px; margin: 40px auto; padding: 0 20px 80px; }
 .card { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 28px; margin-bottom: 20px; }
-h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+
+h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 12px; color: #888; font-weight: 500; }
-.form-group input, .form-group select { padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+.form-group input, .form-group select {
+  padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 8px;
+  font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+}
 .form-group input:focus, .form-group select:focus { border-color: #111; }
-.btn { padding: 11px 22px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer; font-weight: 500; }
+
+.btn { padding: 11px 22px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer; font-weight: 500; transition: background 0.2s; }
 .btn:hover { background: #333; }
-.btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 6px; }
+.btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 6px; }
 .btn-outline { background: transparent; color: #111; border: 1px solid #e0e0e0; }
 .btn-outline:hover { background: #f5f5f5; }
+.btn-danger { background: transparent; color: #dc2626; border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fef2f2; }
 .mt { margin-top: 16px; }
+
 table { width: 100%; border-collapse: collapse; }
-thead th { text-align: left; font-size: 12px; color: #888; font-weight: 500; padding: 0 12px 12px; border-bottom: 1px solid #efefef; }
-tbody td { padding: 14px 12px; font-size: 14px; border-bottom: 1px solid #fafafa; vertical-align: middle; }
-.badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-.badge.confirmed { background: #e8f5e9; color: #2e7d32; }
-.badge.processing { background: #fff8e1; color: #f57f17; }
-.badge.shipped { background: #e3f2fd; color: #1565c0; }
-.badge.transit { background: #f3e5f5; color: #6a1b9a; }
-.badge.customs { background: #fff3e0; color: #e65100; }
-.badge.delivered { background: #e8f5e9; color: #1b5e20; }
+thead th { text-align: left; font-size: 11px; color: #888; font-weight: 500; padding: 0 12px 12px; border-bottom: 1px solid #efefef; text-transform: uppercase; letter-spacing: 0.04em; }
+tbody td { padding: 14px 12px; font-size: 13px; border-bottom: 1px solid #fafafa; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafafa; }
+
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-block; white-space: nowrap; }
+.badge.confirmed  { background: #eff6ff; color: #1d4ed8; }
+.badge.processing { background: #f0f9ff; color: #0369a1; }
+.badge.shipped    { background: #f0fdf4; color: #15803d; }
+.badge.transit    { background: #faf5ff; color: #7e22ce; }
+.badge.customs    { background: #fffbeb; color: #92400e; }
+.badge.approach   { background: #ecfdf5; color: #065f46; }
+.badge.delivered  { background: #f0fdf4; color: #14532d; }
+
+.status-select {
+  padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px;
+  font-size: 12px; font-family: inherit; outline: none; cursor: pointer;
+  background: #fff; min-width: 160px;
+}
+.status-select:focus { border-color: #111; }
+
 .login-wrap { max-width: 400px; margin: 100px auto; }
-.msg { font-size: 13px; color: #888; margin-top: 10px; }
-.success { color: #2e7d32; }
-.error { color: #c62828; }
-select.status-select { padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px; font-family: inherit; outline: none; cursor: pointer; }
+.msg { font-size: 13px; margin-top: 10px; }
+.success { color: #16a34a; }
+.error { color: #dc2626; }
+
+.tracking-link {
+  font-size: 11px; color: #3b82f6; background: #eff6ff;
+  border: 1px solid #bfdbfe; border-radius: 6px;
+  padding: 3px 8px; text-decoration: none; white-space: nowrap;
+}
+.tracking-link:hover { background: #dbeafe; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: #fff; border: 1px solid #efefef; border-radius: 10px; padding: 16px 20px; }
+.stat-val { font-size: 24px; font-weight: 600; font-family: 'Playfair Display', serif; }
+.stat-label { font-size: 11px; color: #888; margin-top: 3px; }
+
+@media (max-width: 680px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="loginPage">
   <div class="login-wrap">
     <div class="card">
@@ -57,13 +97,19 @@ select.status-select { padding: 6px 10px; border: 1px solid #e0e0e0; border-radi
   </div>
 </div>
 
+<!-- ADMIN -->
 <div id="adminPage" style="display:none;">
   <div class="header">
-    <span class="brand">Admin — Suivi commandes</span>
-    <button class="btn btn-outline" style="color:#fff;border-color:#444;" onclick="logout()">Déconnexion</button>
+    <span class="brand">Admin · Suivi commandes</span>
+    <button class="btn btn-outline" style="color:#fff;border-color:#444;font-size:13px;" onclick="logout()">Déconnexion</button>
   </div>
+
   <div class="container">
 
+    <!-- Stats -->
+    <div class="stats" id="stats"></div>
+
+    <!-- Nouvelle commande -->
     <div class="card">
       <h2>Nouvelle commande</h2>
       <div class="form-grid">
@@ -92,8 +138,12 @@ select.status-select { padding: 6px 10px; border: 1px solid #e0e0e0; border-radi
       <div class="msg" id="createMsg"></div>
     </div>
 
+    <!-- Commandes -->
     <div class="card">
-      <h2>Commandes en cours</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="margin-bottom:0;">Commandes</h2>
+        <input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterOrders()" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;">
+      </div>
       <div id="ordersTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
     </div>
 
@@ -103,9 +153,19 @@ select.status-select { padding: 6px 10px; border: 1px solid #e0e0e0; border-radi
 <script>
 const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
-const ADMIN_PASSWORD = 'admin2026';
+const ADMIN_PASSWORD = 'Roadto10M';
 
-const STATUSES = ['confirmed','processing','shipped','transit','customs','delivered'];
+const STATUSES = [
+  { value: 'confirmed',  label: '✓ Commande confirmée' },
+  { value: 'processing', label: '⚙ En préparation' },
+  { value: 'shipped',    label: '🚛 En transit — Sofia' },
+  { value: 'transit',    label: '🚛 En transit — Leipzig' },
+  { value: 'customs',    label: '🛃 Douane — Karlsruhe' },
+  { value: 'approach',   label: '📍 En approche — France' },
+  { value: 'delivered',  label: '✅ Livré' },
+];
+
+let allOrders = [];
 
 function checkLogin() {
   const pw = document.getElementById('pwInput').value;
@@ -140,11 +200,11 @@ function generateTrackingId() {
 }
 
 async function createOrder() {
-  const order_number = document.getElementById('orderNum').value.trim();
-  const tracking_id = document.getElementById('trackingId').value.trim();
-  const customer_name = document.getElementById('custName').value.trim();
+  const order_number   = document.getElementById('orderNum').value.trim();
+  const tracking_id    = document.getElementById('trackingId').value.trim();
+  const customer_name  = document.getElementById('custName').value.trim();
   const customer_email = document.getElementById('custEmail').value.trim();
-  const product_name = document.getElementById('prodName').value.trim();
+  const product_name   = document.getElementById('prodName').value.trim();
   const msg = document.getElementById('createMsg');
 
   if (!order_number || !customer_name) {
@@ -154,12 +214,12 @@ async function createOrder() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: 'POST',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name })
+    body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed' })
   });
 
   if (res.ok) {
     msg.className = 'msg success';
-    msg.textContent = `✓ Commande créée — Lien tracking: ${window.location.origin}/track.html?order=${tracking_id}`;
+    msg.textContent = `✓ Commande créée — lien : ${window.location.origin}/track.html?order=${tracking_id}`;
     document.getElementById('orderNum').value = '';
     document.getElementById('custName').value = '';
     document.getElementById('custEmail').value = '';
@@ -175,32 +235,75 @@ async function loadOrders() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?order=created_at.desc`, {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
   });
-  const orders = await res.json();
+  allOrders = await res.json();
+  renderStats(allOrders);
+  renderTable(allOrders);
+}
 
+function renderStats(orders) {
+  const total    = orders.length;
+  const transit  = orders.filter(o => ['shipped','transit','customs'].includes(o.status)).length;
+  const approach = orders.filter(o => o.status === 'approach').length;
+  const delivered= orders.filter(o => o.status === 'delivered').length;
+  document.getElementById('stats').innerHTML = [
+    { val: total,    label: 'Total commandes' },
+    { val: transit,  label: 'En transit' },
+    { val: approach, label: 'En approche' },
+    { val: delivered,label: 'Livrées' },
+  ].map(s => `<div class="stat-card"><div class="stat-val">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+}
+
+function filterOrders() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allOrders.filter(o =>
+    (o.order_number||'').toLowerCase().includes(q) ||
+    (o.customer_name||'').toLowerCase().includes(q) ||
+    (o.tracking_id||'').toLowerCase().includes(q) ||
+    (o.product_name||'').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(orders) {
   if (!orders.length) {
-    document.getElementById('ordersTable').innerHTML = '<div style="color:#888;font-size:14px;">Aucune commande pour l\'instant.</div>';
+    document.getElementById('ordersTable').innerHTML = '<div style="color:#888;font-size:14px;padding:20px 0;">Aucune commande trouvée.</div>';
     return;
   }
 
-  const rows = orders.map(o => `
-    <tr>
+  const rows = orders.map(o => {
+    const statusLabel = STATUSES.find(s => s.value === o.status)?.label || o.status;
+    const trackUrl = `${window.location.origin}/track.html?order=${o.tracking_id}`;
+    return `<tr>
       <td><strong>#${o.order_number}</strong></td>
-      <td style="color:#888;">${o.tracking_id}</td>
+      <td style="color:#888;font-size:12px;">${o.tracking_id}</td>
       <td>${o.customer_name}</td>
-      <td>${o.product_name || '-'}</td>
+      <td style="color:#666;">${o.product_name || '-'}</td>
       <td><span class="badge ${o.status}">${o.status}</span></td>
       <td>
         <select class="status-select" onchange="updateStatus('${o.id}', this.value)">
-          ${STATUSES.map(s => `<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('')}
+          ${STATUSES.map(s => `<option value="${s.value}" ${s.value===o.status?'selected':''}>${s.label}</option>`).join('')}
         </select>
       </td>
-      <td><button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier lien</button></td>
-    </tr>`).join('');
+      <td>
+        <a class="tracking-link" href="${trackUrl}" target="_blank">Voir →</a>
+      </td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier</button>
+      </td>
+    </tr>`;
+  }).join('');
 
   document.getElementById('ordersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Commande</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Statut</th><th>Modifier</th><th></th>
+        <th>Commande</th>
+        <th>Tracking ID</th>
+        <th>Client</th>
+        <th>Produit</th>
+        <th>Statut</th>
+        <th>Modifier</th>
+        <th>Lien</th>
+        <th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -218,7 +321,7 @@ async function updateStatus(id, status) {
 function copyLink(tracking_id) {
   const url = `${window.location.origin}/track.html?order=${tracking_id}`;
   navigator.clipboard.writeText(url);
-  alert('Lien copié : ' + url);
+  alert('Lien copié !');
 }
 </script>
 </body>

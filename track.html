@@ -56,23 +56,23 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .order-meta { font-size: 13px; color: #888; margin-top: 4px; }
 .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
 .badge.confirmed, .badge.processing { background: #eff6ff; color: #1d4ed8; }
-.badge.shipped, .badge.transit { background: #eff6ff; color: #1d4ed8; }
+.badge.shipped, .badge.transit, .badge.approach { background: #eff6ff; color: #1d4ed8; }
 .badge.customs { background: #fffbeb; color: #92400e; }
 .badge.delivered { background: #f0fdf4; color: #15803d; }
 
 .status-band {
-  padding: 14px 28px; display: flex; align-items: center; gap: 12px;
+  padding: 14px 28px; display: flex; align-items: flex-start; gap: 12px;
   border-bottom: 1px solid #f5f5f5; transition: background 0.4s;
 }
 .status-band.blue { background: #eff6ff; border-bottom-color: #bfdbfe; }
 .status-band.yellow { background: #fffbeb; border-bottom-color: #fde68a; }
 .status-band.green { background: #f0fdf4; border-bottom-color: #bbf7d0; }
-.band-icon { font-size: 20px; flex-shrink: 0; }
+.band-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
 .band-text { font-size: 14px; font-weight: 600; }
 .band-text.blue { color: #1d4ed8; }
 .band-text.yellow { color: #92400e; }
 .band-text.green { color: #15803d; }
-.band-sub { font-size: 12px; margin-top: 2px; }
+.band-sub { font-size: 12px; margin-top: 3px; line-height: 1.5; }
 .band-sub.blue { color: #3b82f6; }
 .band-sub.yellow { color: #d97706; }
 .band-sub.green { color: #16a34a; }
@@ -102,6 +102,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 }
 .dot-done { background: #f0fdf4; border: 1.5px solid #86efac; color: #16a34a; }
 .dot-current { background: #eff6ff; border: 2px solid #3b82f6; color: #3b82f6; }
+.dot-current.yellow { background: #fffbeb; border-color: #f59e0b; color: #d97706; }
 .dot-pending { background: #f9fafb; border: 1.5px solid #e5e7eb; color: #d1d5db; }
 .step-line { width: 2px; flex: 1; min-height: 16px; margin: 3px 0; background: #f3f4f6; }
 .step-line.done { background: #d1fae5; }
@@ -112,6 +113,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .step-name.pending { color: #d1d5db; }
 .step-time { font-size: 11px; color: #9ca3af; margin-top: 1px; }
 .step-time.current { color: #3b82f6; font-weight: 500; }
+.step-time.yellow { color: #d97706; font-weight: 500; }
 
 .contact-link { font-size: 12px; color: #aaa; text-align: center; line-height: 1.8; border-top: 1px solid #f5f5f5; padding-top: 16px; }
 .contact-link a { color: #3b82f6; font-weight: 500; text-decoration: none; }
@@ -155,32 +157,34 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const CHECKPOINT_MAP = {
   confirmed:  { lat: 41.0082, lng: 28.9784, lineIdx: 0 },
   processing: { lat: 41.0082, lng: 28.9784, lineIdx: 0 },
-  shipped:    { lat: 51.3397, lng: 12.3731, lineIdx: 3 },
-  transit:    { lat: 50.1109, lng: 8.6821,  lineIdx: 4 },
-  customs:    { lat: 48.9936, lng: 8.3985,  lineIdx: 5 },
-  delivered:  { lat: 46.2276, lng: 2.2137,  lineIdx: 6 },
+  shipped:    { lat: 42.6977, lng: 23.3219, lineIdx: 1 }, // Sofia
+  transit:    { lat: 51.3397, lng: 12.3731, lineIdx: 3 }, // Leipzig
+  customs:    { lat: 48.9936, lng: 8.3985,  lineIdx: 4 }, // Karlsruhe
+  approach:   { lat: 48.8566, lng: 2.3522,  lineIdx: 5 }, // Paris
+  delivered:  { lat: 46.2276, lng: 2.2137,  lineIdx: 5 },
 };
 
 const ROUTE_PATH = [
-  [41.0082, 28.9784],
-  [42.6977, 23.3219],
-  [47.4979, 19.0402],
-  [51.3397, 12.3731],
-  [50.1109, 8.6821],
-  [48.9936, 8.3985],
-  [46.2276, 2.2137],
+  [41.0082, 28.9784], // Istanbul
+  [42.6977, 23.3219], // Sofia
+  [47.4979, 19.0402], // Budapest
+  [51.3397, 12.3731], // Leipzig
+  [48.9936, 8.3985],  // Karlsruhe
+  [48.8566, 2.3522],  // France
 ];
 
-const CLIENT_VIEW = {
-  confirmed:  { label: 'Expédié',    sub: 'Votre colis a quitté notre entrepôt',                     theme: 'blue',   icon: '📦', stepIdx: 0 },
-  processing: { label: 'Expédié',    sub: 'Votre colis est en cours de préparation',                  theme: 'blue',   icon: '📦', stepIdx: 0 },
-  shipped:    { label: 'En transit', sub: 'Centre de tri DHL · Leipzig, Allemagne',                    theme: 'blue',   icon: '🚛', stepIdx: 1 },
-  transit:    { label: 'En transit', sub: 'Centre de distribution · Frankfurt, Allemagne',             theme: 'blue',   icon: '🚛', stepIdx: 1 },
-  customs:    { label: 'En transit', sub: 'Centre de tri Deutsche Post · Karlsruhe, Allemagne',        theme: 'yellow', icon: '🚛', stepIdx: 1 },
-  delivered:  { label: 'Livré',      sub: 'Votre commande a été livrée. Merci !',                     theme: 'green',  icon: '✅', stepIdx: 3 },
-};
+// 5 steps visible to client
+const CLIENT_STEPS = ['Commande confirmée', 'En préparation', 'En transit', 'En approche', 'Livré'];
 
-const CLIENT_STEPS = ['Expédié', 'En transit', 'En approche', 'Livré'];
+const CLIENT_VIEW = {
+  confirmed:  { label: 'Commande confirmée', sub: 'Votre commande a bien été reçue et validée.',              theme: 'blue',   icon: '✓',  stepIdx: 0, isCustoms: false },
+  processing: { label: 'En préparation',     sub: 'Votre colis est en cours de préparation à Istanbul.',      theme: 'blue',   icon: '⚙️', stepIdx: 1, isCustoms: false },
+  shipped:    { label: 'En transit',         sub: 'Hub logistique · Sofia, Bulgarie',                         theme: 'blue',   icon: '🚛', stepIdx: 2, isCustoms: false },
+  transit:    { label: 'En transit',         sub: 'Centre de tri DHL · Leipzig, Allemagne',                   theme: 'blue',   icon: '🚛', stepIdx: 2, isCustoms: false },
+  customs:    { label: 'En transit',         sub: 'Votre colis est momentanément retenu en douane — traitement en cours, aucune action requise de votre part.', theme: 'yellow', icon: '🚛', stepIdx: 2, isCustoms: true },
+  approach:   { label: 'En approche',        sub: 'Votre colis est arrivé en France.',                        theme: 'blue',   icon: '📍', stepIdx: 3, isCustoms: false },
+  delivered:  { label: 'Livré',              sub: 'Votre commande a été livrée. Merci pour votre confiance !',theme: 'green',  icon: '✅', stepIdx: 4, isCustoms: false },
+};
 
 let mapInstance = null;
 
@@ -203,7 +207,6 @@ async function searchOrder() {
     { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
   );
   const data = await res.json();
-
   if (!data.length) {
     document.getElementById('result').innerHTML = '<div class="msg-box">Aucune commande trouvée avec ce numéro.</div>';
     return;
@@ -225,14 +228,15 @@ function renderOrder(order) {
     const current = i === view.stepIdx;
     const pending = i > view.stepIdx;
     const isLast  = i === CLIENT_STEPS.length - 1;
+    const isCustomsCurrent = current && view.isCustoms;
     return `<div class="step-row">
       <div class="step-col">
-        <div class="step-dot ${done ? 'dot-done' : current ? 'dot-current' : 'dot-pending'}">${done ? '✓' : current ? '●' : ''}</div>
+        <div class="step-dot ${done ? 'dot-done' : current ? (isCustomsCurrent ? 'dot-current yellow' : 'dot-current') : 'dot-pending'}">${done ? '✓' : current ? '●' : ''}</div>
         ${!isLast ? `<div class="step-line ${done ? 'done' : ''}"></div>` : ''}
       </div>
       <div class="step-info">
         <div class="step-name ${done ? 'done' : pending ? 'pending' : ''}">${s}</div>
-        <div class="step-time ${current ? 'current' : ''}">${done ? 'Complété' : current ? 'En cours' : ''}</div>
+        <div class="step-time ${current ? (isCustomsCurrent ? 'yellow' : 'current') : ''}">${done ? 'Complété' : current ? (isCustomsCurrent ? 'Retenu en douane' : 'En cours') : ''}</div>
       </div>
     </div>`;
   }).join('');

@@ -12,6 +12,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .header { background: #111; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .brand { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: #fff; }
 
+.tabs { background: #1a1a1a; display: flex; gap: 0; padding: 0 24px; }
+.tab {
+  padding: 12px 20px; font-size: 13px; color: #888; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.15s; font-weight: 500;
+}
+.tab:hover { color: #ccc; }
+.tab.active { color: #fff; border-bottom-color: #fff; }
+
 .container { max-width: 960px; margin: 40px auto; padding: 0 20px 80px; }
 .card { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 28px; margin-bottom: 20px; }
 
@@ -31,8 +39,6 @@ h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
 .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 6px; }
 .btn-outline { background: transparent; color: #111; border: 1px solid #e0e0e0; }
 .btn-outline:hover { background: #f5f5f5; }
-.btn-danger { background: transparent; color: #dc2626; border: 1px solid #fecaca; }
-.btn-danger:hover { background: #fef2f2; }
 .mt { margin-top: 16px; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -50,12 +56,17 @@ tbody tr:hover td { background: #fafafa; }
 .badge.approach   { background: #ecfdf5; color: #065f46; }
 .badge.delivered  { background: #f0fdf4; color: #14532d; }
 
+/* Refund badges */
+.rbadge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-block; }
+.rbadge.pending   { background: #fffbeb; color: #92400e; }
+.rbadge.processed { background: #f0fdf4; color: #15803d; }
+.rbadge.refused   { background: #fef2f2; color: #dc2626; }
+
 .status-select {
   padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px;
   font-size: 12px; font-family: inherit; outline: none; cursor: pointer;
   background: #fff; min-width: 160px;
 }
-.status-select:focus { border-color: #111; }
 
 .login-wrap { max-width: 400px; margin: 100px auto; }
 .msg { font-size: 13px; margin-top: 10px; }
@@ -74,9 +85,35 @@ tbody tr:hover td { background: #fafafa; }
 .stat-val { font-size: 24px; font-weight: 600; font-family: 'Playfair Display', serif; }
 .stat-label { font-size: 11px; color: #888; margin-top: 3px; }
 
+/* Refund detail modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: 16px; padding: 32px;
+  max-width: 560px; width: 90%; max-height: 85vh; overflow-y: auto;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none; font-size: 20px; cursor: pointer; color: #888;
+}
+.modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.modal-field { display: flex; flex-direction: column; gap: 3px; }
+.modal-field.full { grid-column: 1/-1; }
+.modal-field label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
+.modal-field span { font-size: 13px; color: #111; line-height: 1.5; }
+.modal-divider { grid-column: 1/-1; border: none; border-top: 1px solid #f0f0f0; margin: 4px 0; }
+.stars-display { color: #f59e0b; font-size: 16px; letter-spacing: 1px; }
+
 @media (max-width: 680px) {
   .form-grid { grid-template-columns: 1fr; }
   .stats { grid-template-columns: 1fr 1fr; }
+  .modal-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -104,49 +141,77 @@ tbody tr:hover td { background: #fafafa; }
     <button class="btn btn-outline" style="color:#fff;border-color:#444;font-size:13px;" onclick="logout()">Déconnexion</button>
   </div>
 
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('orders')">📦 Commandes</div>
+    <div class="tab" onclick="switchTab('refunds')">🔄 Remboursements</div>
+  </div>
+
   <div class="container">
 
-    <!-- Stats -->
-    <div class="stats" id="stats"></div>
+    <!-- ===== ONGLET COMMANDES ===== -->
+    <div id="tab-orders">
+      <div class="stats" id="stats"></div>
 
-    <!-- Nouvelle commande -->
-    <div class="card">
-      <h2>Nouvelle commande</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Numéro de commande</label>
-          <input type="text" id="orderNum" placeholder="ex: 10042" />
+      <div class="card">
+        <h2>Nouvelle commande</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Numéro de commande</label>
+            <input type="text" id="orderNum" placeholder="ex: 10042" />
+          </div>
+          <div class="form-group">
+            <label>Numéro de suivi (auto)</label>
+            <input type="text" id="trackingId" placeholder="TRK-2026-XXXXX" readonly style="background:#f9f9f9;" />
+          </div>
+          <div class="form-group">
+            <label>Nom du client</label>
+            <input type="text" id="custName" placeholder="Jean Dupont" />
+          </div>
+          <div class="form-group">
+            <label>Email du client</label>
+            <input type="email" id="custEmail" placeholder="jean@email.com" />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Produit</label>
+            <input type="text" id="prodName" placeholder="Nom du produit" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>Numéro de suivi (auto)</label>
-          <input type="text" id="trackingId" placeholder="TRK-2026-XXXXX" readonly style="background:#f9f9f9;" />
-        </div>
-        <div class="form-group">
-          <label>Nom du client</label>
-          <input type="text" id="custName" placeholder="Jean Dupont" />
-        </div>
-        <div class="form-group">
-          <label>Email du client</label>
-          <input type="email" id="custEmail" placeholder="jean@email.com" />
-        </div>
-        <div class="form-group" style="grid-column:1/-1;">
-          <label>Produit</label>
-          <input type="text" id="prodName" placeholder="Nom du produit" />
-        </div>
+        <button class="btn mt" onclick="createOrder()">Créer la commande</button>
+        <div class="msg" id="createMsg"></div>
       </div>
-      <button class="btn mt" onclick="createOrder()">Créer la commande</button>
-      <div class="msg" id="createMsg"></div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 style="margin-bottom:0;">Commandes</h2>
+          <input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterOrders()" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;">
+        </div>
+        <div id="ordersTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
+      </div>
     </div>
 
-    <!-- Commandes -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="margin-bottom:0;">Commandes</h2>
-        <input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterOrders()" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;">
+    <!-- ===== ONGLET REMBOURSEMENTS ===== -->
+    <div id="tab-refunds" style="display:none;">
+
+      <div class="stats" id="refund-stats"></div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 style="margin-bottom:0;">Demandes de remboursement</h2>
+          <input type="text" id="refundSearch" placeholder="Rechercher..." oninput="filterRefunds()" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;">
+        </div>
+        <div id="refundsTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
       </div>
-      <div id="ordersTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL détail remboursement -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">✕</button>
+    <div class="modal-title" id="modal-title">Demande</div>
+    <div class="modal-grid" id="modal-content"></div>
   </div>
 </div>
 
@@ -165,7 +230,14 @@ const STATUSES = [
   { value: 'delivered',  label: '✅ Livré' },
 ];
 
+const REFUND_STATUSES = [
+  { value: 'pending',   label: '⏳ En attente' },
+  { value: 'processed', label: '✅ Traité' },
+  { value: 'refused',   label: '❌ Refusé' },
+];
+
 let allOrders = [];
+let allRefunds = [];
 
 function checkLogin() {
   const pw = document.getElementById('pwInput').value;
@@ -193,6 +265,13 @@ window.onload = () => {
     loadOrders();
   }
 };
+
+function switchTab(tab) {
+  document.getElementById('tab-orders').style.display  = tab === 'orders'  ? 'block' : 'none';
+  document.getElementById('tab-refunds').style.display = tab === 'refunds' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'orders') || (i === 1 && tab === 'refunds')));
+  if (tab === 'refunds') loadRefunds();
+}
 
 function generateTrackingId() {
   const num = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
@@ -269,9 +348,7 @@ function renderTable(orders) {
     document.getElementById('ordersTable').innerHTML = '<div style="color:#888;font-size:14px;padding:20px 0;">Aucune commande trouvée.</div>';
     return;
   }
-
   const rows = orders.map(o => {
-    const statusLabel = STATUSES.find(s => s.value === o.status)?.label || o.status;
     const trackUrl = `${window.location.origin}/track.html?order=${o.tracking_id}`;
     return `<tr>
       <td><strong>#${o.order_number}</strong></td>
@@ -284,26 +361,14 @@ function renderTable(orders) {
           ${STATUSES.map(s => `<option value="${s.value}" ${s.value===o.status?'selected':''}>${s.label}</option>`).join('')}
         </select>
       </td>
-      <td>
-        <a class="tracking-link" href="${trackUrl}" target="_blank">Voir →</a>
-      </td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier</button>
-      </td>
+      <td><a class="tracking-link" href="${trackUrl}" target="_blank">Voir →</a></td>
+      <td><button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier</button></td>
     </tr>`;
   }).join('');
-
   document.getElementById('ordersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Commande</th>
-        <th>Tracking ID</th>
-        <th>Client</th>
-        <th>Produit</th>
-        <th>Statut</th>
-        <th>Modifier</th>
-        <th>Lien</th>
-        <th></th>
+        <th>Commande</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -319,9 +384,120 @@ async function updateStatus(id, status) {
 }
 
 function copyLink(tracking_id) {
-  const url = `${window.location.origin}/track.html?order=${tracking_id}`;
-  navigator.clipboard.writeText(url);
+  navigator.clipboard.writeText(`${window.location.origin}/track.html?order=${tracking_id}`);
   alert('Lien copié !');
+}
+
+// ===== REMBOURSEMENTS =====
+
+async function loadRefunds() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/refunds?order=created_at.desc`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  allRefunds = await res.json();
+  renderRefundStats(allRefunds);
+  renderRefunds(allRefunds);
+}
+
+function renderRefundStats(refunds) {
+  const total     = refunds.length;
+  const pending   = refunds.filter(r => !r.refund_status || r.refund_status === 'pending').length;
+  const processed = refunds.filter(r => r.refund_status === 'processed').length;
+  const refused   = refunds.filter(r => r.refund_status === 'refused').length;
+  document.getElementById('refund-stats').innerHTML = [
+    { val: total,     label: 'Total demandes' },
+    { val: pending,   label: 'En attente' },
+    { val: processed, label: 'Traitées' },
+    { val: refused,   label: 'Refusées' },
+  ].map(s => `<div class="stat-card"><div class="stat-val">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+}
+
+function filterRefunds() {
+  const q = document.getElementById('refundSearch').value.toLowerCase();
+  const filtered = allRefunds.filter(r =>
+    (r.customer_name||'').toLowerCase().includes(q) ||
+    (r.customer_email||'').toLowerCase().includes(q) ||
+    (r.order_number||'').toLowerCase().includes(q) ||
+    (r.motif||'').toLowerCase().includes(q)
+  );
+  renderRefunds(filtered);
+}
+
+function renderRefunds(refunds) {
+  if (!refunds.length) {
+    document.getElementById('refundsTable').innerHTML = '<div style="color:#888;font-size:14px;padding:20px 0;">Aucune demande pour l\'instant.</div>';
+    return;
+  }
+  const rows = refunds.map(r => {
+    const status = r.refund_status || 'pending';
+    const date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '-';
+    return `<tr>
+      <td>${date}</td>
+      <td><strong>${r.customer_name}</strong><div style="font-size:11px;color:#888;">${r.customer_email}</div></td>
+      <td style="color:#666;">${r.order_number || '-'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.motif || '-'}</td>
+      <td>${r.solution || '-'}</td>
+      <td><span class="rbadge ${status}">${REFUND_STATUSES.find(s=>s.value===status)?.label || status}</span></td>
+      <td>
+        <select class="status-select" onchange="updateRefundStatus('${r.id}', this.value)">
+          ${REFUND_STATUSES.map(s => `<option value="${s.value}" ${s.value===status?'selected':''}>${s.label}</option>`).join('')}
+        </select>
+      </td>
+      <td><button class="btn btn-outline btn-sm" onclick="openRefund(${JSON.stringify(r).replace(/"/g,'&quot;')})">Détails</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('refundsTable').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Client</th><th>Commande</th><th>Motif</th><th>Solution</th><th>Statut</th><th>Modifier</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function updateRefundStatus(id, status) {
+  await fetch(`${SUPABASE_URL}/rest/v1/refunds?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refund_status: status })
+  });
+  loadRefunds();
+}
+
+function openRefund(r) {
+  const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '-';
+  document.getElementById('modal-title').textContent = `Demande — ${r.customer_name}`;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-field"><label>Client</label><span>${r.customer_name}</span></div>
+    <div class="modal-field"><label>Email</label><span>${r.customer_email}</span></div>
+    <div class="modal-field"><label>Commande</label><span>${r.order_number || '-'}</span></div>
+    <div class="modal-field"><label>Suivi</label><span>${r.tracking_id || '-'}</span></div>
+    <div class="modal-field"><label>Produit</label><span>${r.product_name || '-'}</span></div>
+    <div class="modal-field"><label>Date problème</label><span>${r.issue_date || '-'}</span></div>
+    <hr class="modal-divider">
+    <div class="modal-field full"><label>Motif</label><span>${r.motif || '-'}</span></div>
+    <div class="modal-field full"><label>Description</label><span>${r.description || '-'}</span></div>
+    <div class="modal-field"><label>Solution souhaitée</label><span>${r.solution || '-'}</span></div>
+    <div class="modal-field"><label>IBAN</label><span>${r.iban || '-'}</span></div>
+    <div class="modal-field"><label>Support contacté</label><span>${r.contacted_support || '-'}</span></div>
+    <hr class="modal-divider">
+    <div class="modal-field"><label>Note</label><span class="stars-display">${stars}</span></div>
+    <div class="modal-field"><label>NPS</label><span>${r.nps ?? '-'} / 10</span></div>
+    <div class="modal-field"><label>Livraison ok</label><span>${r.delivery_ok || '-'}</span></div>
+    <div class="modal-field"><label>Recommande</label><span>${r.recommend || '-'}</span></div>
+    <hr class="modal-divider">
+    <div class="modal-field full"><label>Ce qui a déçu</label><span>${r.dislike || '-'}</span></div>
+    <div class="modal-field full"><label>Ce qui a plu</label><span>${r.liked || '-'}</span></div>
+    <div class="modal-field full"><label>Améliorations</label><span>${r.improve || '-'}</span></div>
+    <div class="modal-field"><label>Source</label><span>${r.source || '-'}</span></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
 }
 </script>
 </body>

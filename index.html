@@ -3,11 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suivi de commande</title>
+<title>Suivi de livraison</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif; color: #111;
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: #f8f7f4;
+}
+
+.header {
+  background: #fff; border-bottom: 1px solid #efefef;
+  padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+
+.hero {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 40px 20px;
+}
+.hero-inner { max-width: 480px; width: 100%; text-align: center; }
+
+.hero-icon { font-size: 48px; margin-bottom: 24px; }
+.hero-title {
+  font-family: 'Playfair Display', serif; font-size: 32px;
+  font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px;
+}
+.hero-sub { font-size: 15px; color: #888; margin-bottom: 36px; line-height: 1.6; }
+
+.search-wrap {
+  background: #fff; border: 1px solid #efefef; border-radius: 14px;
+  padding: 28px; box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+}
+.search-row { display: flex; gap: 10px; }
+.search-row input {
+  flex: 1; padding: 13px 16px; border: 1.5px solid #e0e0e0;
+  border-radius: 8px; font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color 0.2s;
+}
+.search-row input:focus { border-color: #111; }
+.btn {
+  padding: 13px 24px; background: #111; color: #fff;
+  border: none; border-radius: 8px; font-size: 14px;
+  font-family: inherit; cursor: pointer; font-weight: 500;
+  transition: background 0.2s; white-space: nowrap;
+}
+.btn:hover { background: #333; }
+
+.hint { font-size: 12px; color: #bbb; margin-top: 12px; }
+
+.footer {
+  text-align: center; padding: 24px;
+  font-size: 12px; color: #ccc;
+}
+</style>
 </head>
 <body>
+
+<div class="header">
+  <span class="brand">Suivi de livraison</span>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-icon">📦</div>
+    <h1 class="hero-title">Où est mon colis ?</h1>
+    <p class="hero-sub">Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.</p>
+
+    <div class="search-wrap">
+      <div class="search-row">
+        <input type="text" id="trackInput" placeholder="ex: TRK-2026-00001" onkeydown="if(event.key==='Enter')search()">
+        <button class="btn" onclick="search()">Suivre</button>
+      </div>
+      <div class="hint">Votre numéro de suivi se trouve dans l'email de confirmation de commande.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">trackyourorder.co</div>
+
 <script>
-  window.location.href = '/track';
+function search() {
+  const val = document.getElementById('trackInput').value.trim();
+  if (!val) return;
+  window.location.href = '/track.html?order=' + encodeURIComponent(val);
+}
 </script>
 </body>
 </html>

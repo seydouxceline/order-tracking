@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demande de remboursement</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min-height: 100vh; }
+
+.header {
+  background: #fff; border-bottom: 1px solid #efefef;
+  padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 99;
+}
+.brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+.header-sub { font-size: 12px; color: #aaa; }
+
+.container { max-width: 660px; margin: 0 auto; padding: 40px 20px 80px; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
+.page-sub { font-size: 14px; color: #888; margin-bottom: 36px; line-height: 1.6; }
+
+.section {
+  background: #fff; border: 1px solid #efefef; border-radius: 14px;
+  padding: 24px; margin-bottom: 14px;
+}
+.section-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: #bbb; margin-bottom: 18px; padding-bottom: 12px;
+  border-bottom: 1px solid #f5f5f5;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::before {
+  content: attr(data-num);
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #111; color: #fff;
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; flex-shrink: 0;
+}
+
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.field-row .field { margin-bottom: 0; }
+
+label { display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 5px; }
+label .req { color: #dc2626; margin-left: 2px; }
+
+input[type="text"], input[type="email"], input[type="date"],
+textarea, select {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid #e8e8e8; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; color: #111;
+  background: #fff; outline: none; transition: border-color 0.2s;
+  appearance: none;
+}
+input:focus, textarea:focus, select:focus { border-color: #111; }
+textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+
+.radio-group { display: flex; flex-direction: column; gap: 7px; }
+.radio-group.horizontal { flex-direction: row; flex-wrap: wrap; }
+.radio-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; border: 1.5px solid #e8e8e8; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s; font-size: 13px; user-select: none;
+}
+.radio-item:hover { border-color: #bbb; }
+.radio-item.selected { border-color: #111; background: #f9f9f9; font-weight: 500; }
+.radio-item input { display: none; }
+.radio-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid #ddd; flex-shrink: 0; transition: all 0.15s;
+}
+.radio-item.selected .radio-dot { border-color: #111; background: #111; }
+
+.stars { display: flex; gap: 6px; margin-top: 2px; }
+.star { font-size: 26px; cursor: pointer; filter: grayscale(1) opacity(0.25); transition: filter 0.15s, transform 0.1s; }
+.star:hover, .star.active { filter: none; transform: scale(1.1); }
+.star-label { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+.range-wrap { margin-top: 4px; }
+input[type="range"] {
+  width: 100%; height: 3px; border-radius: 3px; border: none;
+  background: linear-gradient(to right, #111 50%, #e8e8e8 50%);
+  outline: none; cursor: pointer; padding: 0;
+}
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #111; cursor: pointer; }
+.range-labels { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-top: 5px; }
+
+.confirm-box {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px; border: 1.5px solid #e8e8e8; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 20px;
+  font-size: 13px; line-height: 1.6; color: #666; user-select: none;
+}
+.confirm-box:hover { border-color: #bbb; }
+.confirm-box.selected { border-color: #111; background: #f9f9f9; }
+.confirm-check {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid #ddd; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; transition: all 0.15s;
+}
+.confirm-box.selected .confirm-check { background: #111; border-color: #111; color: #fff; }
+
+.submit-btn {
+  width: 100%; padding: 14px; background: #111; color: #fff;
+  border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+#success { display: none; text-align: center; padding: 60px 20px; }
+.success-icon { font-size: 44px; margin-bottom: 14px; }
+.success-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+.success-sub { font-size: 14px; color: #888; line-height: 1.7; }
+
+@media (max-width: 540px) {
+  .field-row { grid-template-columns: 1fr; }
+  .radio-group.horizontal { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="brand">Service client</span>
+  <span class="header-sub">Demande de remboursement</span>
+</div>
+
+<div class="container">
+  <div id="form-wrap">
+    <div class="page-title">Votre demande</div>
+    <p class="page-sub">Remplissez ce formulaire pour soumettre votre demande. Notre équipe vous répondra dans les plus brefs délais. Les champs <span style="color:#dc2626">*</span> sont obligatoires.</p>
+
+    <!-- 1. Infos -->
+    <div class="section">
+      <div class="section-title" data-num="1">Vos informations</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Nom complet <span class="req">*</span></label>
+          <input type="text" id="f-name" placeholder="Jean Dupont">
+        </div>
+        <div class="field">
+          <label>Adresse email <span class="req">*</span></label>
+          <input type="email" id="f-email" placeholder="jean@email.com">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Numéro de commande</label>
+          <input type="text" id="f-order" placeholder="ex: 10042">
+        </div>
+        <div class="field">
+          <label>Numéro de suivi</label>
+          <input type="text" id="f-tracking" placeholder="TRK-2026-XXXXX">
+        </div>
+      </div>
+      <div class="field">
+        <label>Produit concerné</label>
+        <input type="text" id="f-product" placeholder="Nom du produit commandé">
+      </div>
+    </div>
+
+    <!-- 2. Problème -->
+    <div class="section">
+      <div class="section-title" data-num="2">Nature du problème</div>
+      <div class="field">
+        <label>Motif de la demande <span class="req">*</span></label>
+        <div class="radio-group" id="rg-motif">
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Colis non reçu</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Produit endommagé à la réception</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Produit non conforme à la description</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Délai de livraison trop long</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Erreur dans la commande</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-motif')"><input type="radio"><div class="radio-dot"></div>Autre</label>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label>Description détaillée <span class="req">*</span></label>
+        <textarea id="f-desc" placeholder="Décrivez votre problème en détail..."></textarea>
+      </div>
+      <div class="field">
+        <label>Date du problème</label>
+        <input type="date" id="f-issue-date">
+      </div>
+      <div class="field">
+        <label>Avez-vous déjà contacté notre support ?</label>
+        <div class="radio-group horizontal" id="rg-contact">
+          <label class="radio-item" onclick="selectRadio(this,'rg-contact')"><input type="radio"><div class="radio-dot"></div>Oui</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-contact')"><input type="radio"><div class="radio-dot"></div>Non</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Solution -->
+    <div class="section">
+      <div class="section-title" data-num="3">Solution souhaitée</div>
+      <div class="field">
+        <label>Que souhaitez-vous ? <span class="req">*</span></label>
+        <div class="radio-group" id="rg-solution">
+          <label class="radio-item" onclick="selectRadio(this,'rg-solution')"><input type="radio"><div class="radio-dot"></div>Remboursement complet</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-solution')"><input type="radio"><div class="radio-dot"></div>Remboursement partiel</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-solution')"><input type="radio"><div class="radio-dot"></div>Renvoi du produit</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-solution')"><input type="radio"><div class="radio-dot"></div>Bon d'achat</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-solution')"><input type="radio"><div class="radio-dot"></div>Autre</label>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label>IBAN (si remboursement bancaire)</label>
+        <input type="text" id="f-iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX">
+        <div style="font-size:11px;color:#aaa;margin-top:4px;">Utilisé uniquement pour procéder au remboursement.</div>
+      </div>
+    </div>
+
+    <!-- 4. Satisfaction -->
+    <div class="section">
+      <div class="section-title" data-num="4">Votre satisfaction</div>
+      <div class="field">
+        <label>Note globale de votre expérience</label>
+        <div class="stars" id="stars">
+          <span class="star" data-v="1" onclick="setStar(1)">★</span>
+          <span class="star" data-v="2" onclick="setStar(2)">★</span>
+          <span class="star" data-v="3" onclick="setStar(3)">★</span>
+          <span class="star" data-v="4" onclick="setStar(4)">★</span>
+          <span class="star" data-v="5" onclick="setStar(5)">★</span>
+        </div>
+        <div class="star-label" id="star-label">Cliquez pour noter</div>
+      </div>
+      <div class="field">
+        <label>La livraison a-t-elle correspondu à vos attentes ?</label>
+        <div class="radio-group horizontal" id="rg-delivery">
+          <label class="radio-item" onclick="selectRadio(this,'rg-delivery')"><input type="radio"><div class="radio-dot"></div>Oui</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-delivery')"><input type="radio"><div class="radio-dot"></div>Non</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-delivery')"><input type="radio"><div class="radio-dot"></div>Partiellement</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Probabilité de nous recommander (0 → 10)</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="10" value="5" id="f-nps" oninput="updateNPS(this)">
+          <div class="range-labels"><span>0 — Pas du tout</span><span id="nps-val">5</span><span>10 — Certainement</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Amélioration -->
+    <div class="section">
+      <div class="section-title" data-num="5">Aidez-nous à nous améliorer</div>
+      <div class="field">
+        <label>Qu'est-ce qui vous a le plus déçu ?</label>
+        <textarea id="f-dislike" placeholder="La livraison, le produit, le service client..."></textarea>
+      </div>
+      <div class="field">
+        <label>Qu'est-ce qui vous a satisfait ?</label>
+        <textarea id="f-like" placeholder="Ce que vous avez apprécié..."></textarea>
+      </div>
+      <div class="field">
+        <label>Que pourrions-nous améliorer ?</label>
+        <textarea id="f-improve" placeholder="Vos suggestions..."></textarea>
+      </div>
+      <div class="field">
+        <label>Comment avez-vous connu notre boutique ?</label>
+        <select id="f-source">
+          <option value="">Sélectionner...</option>
+          <option>Réseaux sociaux (Instagram, TikTok...)</option>
+          <option>Publicité en ligne</option>
+          <option>Recommandation d'un proche</option>
+          <option>Moteur de recherche</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Recommanderiez-vous notre boutique malgré ce problème ?</label>
+        <div class="radio-group horizontal" id="rg-recommend">
+          <label class="radio-item" onclick="selectRadio(this,'rg-recommend')"><input type="radio"><div class="radio-dot"></div>Oui</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-recommend')"><input type="radio"><div class="radio-dot"></div>Non</label>
+          <label class="radio-item" onclick="selectRadio(this,'rg-recommend')"><input type="radio"><div class="radio-dot"></div>Si le problème est résolu</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Confirmation -->
+    <div class="section">
+      <div class="section-title" data-num="6">Confirmation</div>
+      <div class="confirm-box" id="confirm-box" onclick="toggleConfirm()">
+        <div class="confirm-check" id="confirm-check"></div>
+        <span>Je certifie que les informations renseignées sont exactes et complètes. Je comprends que toute fausse déclaration pourrait entraîner le rejet de ma demande.</span>
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="submitForm()" disabled>Envoyer ma demande</button>
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:12px;">Notre équipe vous répondra dans les plus brefs délais.</div>
+    </div>
+
+  </div>
+
+  <div id="success">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Demande envoyée</div>
+    <p class="success-sub">Votre demande a bien été reçue.<br>Notre équipe vous répondra à l'adresse indiquée dans les plus brefs délais.</p>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
+
+let confirmed = false;
+let starVal = 0;
+
+// Pre-fill from URL params
+const params = new URLSearchParams(window.location.search);
+if (params.get('order'))    document.getElementById('f-order').value    = params.get('order');
+if (params.get('tracking')) document.getElementById('f-tracking').value = params.get('tracking');
+if (params.get('name'))     document.getElementById('f-name').value     = params.get('name');
+
+function selectRadio(el, groupId) {
+  document.querySelectorAll('#' + groupId + ' .radio-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setStar(v) {
+  starVal = v;
+  const labels = ['', 'Très insatisfait', 'Insatisfait', 'Neutre', 'Satisfait', 'Très satisfait'];
+  document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.dataset.v) <= v));
+  document.getElementById('star-label').textContent = labels[v];
+}
+
+function updateNPS(input) {
+  const val = input.value;
+  document.getElementById('nps-val').textContent = val;
+  const pct = (val / 10) * 100;
+  input.style.background = `linear-gradient(to right, #111 ${pct}%, #e8e8e8 ${pct}%)`;
+}
+
+function toggleConfirm() {
+  confirmed = !confirmed;
+  document.getElementById('confirm-box').classList.toggle('selected', confirmed);
+  document.getElementById('confirm-check').textContent = confirmed ? '✓' : '';
+  document.getElementById('submit-btn').disabled = !confirmed;
+}
+
+function getRadioValue(groupId) {
+  const sel = document.querySelector('#' + groupId + ' .radio-item.selected');
+  return sel ? sel.textContent.trim() : '';
+}
+
+async function submitForm() {
+  const name  = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const motif = getRadioValue('rg-motif');
+  const desc  = document.getElementById('f-desc').value.trim();
+  const solution = getRadioValue('rg-solution');
+
+  if (!name || !email) { alert('Veuillez renseigner votre nom et email.'); return; }
+  if (!motif) { alert('Veuillez sélectionner un motif.'); return; }
+  if (!desc) { alert('Veuillez décrire votre problème.'); return; }
+  if (!solution) { alert('Veuillez sélectionner la solution souhaitée.'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  const payload = {
+    customer_name:      name,
+    customer_email:     email,
+    order_number:       document.getElementById('f-order').value.trim() || null,
+    tracking_id:        document.getElementById('f-tracking').value.trim() || null,
+    product_name:       document.getElementById('f-product').value.trim() || null,
+    issue_date:         document.getElementById('f-issue-date').value || null,
+    motif,
+    description:        desc,
+    solution,
+    iban:               document.getElementById('f-iban').value.trim() || null,
+    contacted_support:  getRadioValue('rg-contact') || null,
+    rating:             starVal || null,
+    delivery_ok:        getRadioValue('rg-delivery') || null,
+    nps:                parseInt(document.getElementById('f-nps').value),
+    dislike:            document.getElementById('f-dislike').value.trim() || null,
+    liked:              document.getElementById('f-like').value.trim() || null,
+    improve:            document.getElementById('f-improve').value.trim() || null,
+    source:             document.getElementById('f-source').value || null,
+    recommend:          getRadioValue('rg-recommend') || null,
+  };
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/refunds`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    document.getElementById('form-wrap').style.display = 'none';
+    document.getElementById('success').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer ma demande';
+    alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+  }
+}
+</script>
+</body>
+</html>

@@ -57,6 +57,7 @@ textarea, select {
   appearance: none;
 }
 input:focus, textarea:focus, select:focus { border-color: #111; }
+input.error, textarea.error, select.error { border-color: #dc2626; }
 textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
 select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -73,16 +74,15 @@ select {
 .radio-item:hover { border-color: #bbb; }
 .radio-item.selected { border-color: #111; background: #f9f9f9; font-weight: 500; }
 .radio-item input { display: none; }
-.radio-dot {
-  width: 14px; height: 14px; border-radius: 50%;
-  border: 1.5px solid #ddd; flex-shrink: 0; transition: all 0.15s;
-}
+.radio-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #ddd; flex-shrink: 0; transition: all 0.15s; }
 .radio-item.selected .radio-dot { border-color: #111; background: #111; }
+.radio-group.error .radio-item { border-color: #fecaca; }
 
 .stars { display: flex; gap: 6px; margin-top: 2px; }
 .star { font-size: 26px; cursor: pointer; filter: grayscale(1) opacity(0.25); transition: filter 0.15s, transform 0.1s; }
 .star:hover, .star.active { filter: none; transform: scale(1.1); }
 .star-label { font-size: 12px; color: #aaa; margin-top: 5px; }
+.stars.error .star { filter: grayscale(1) opacity(0.25) drop-shadow(0 0 2px #dc2626); }
 
 .range-wrap { margin-top: 4px; }
 input[type="range"] {
@@ -116,6 +116,8 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 }
 .submit-btn:hover { opacity: 0.85; }
 .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.field-error { font-size: 11px; color: #dc2626; margin-top: 4px; }
 
 #success { display: none; text-align: center; padding: 60px 20px; }
 .success-icon { font-size: 44px; margin-bottom: 14px; }
@@ -164,7 +166,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         </div>
       </div>
       <div class="field">
-        <label>Produit concerné</label>
+        <label>Produit concerné <span class="req">*</span></label>
         <input type="text" id="f-product" placeholder="Nom du produit commandé">
       </div>
     </div>
@@ -188,11 +190,11 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         <textarea id="f-desc" placeholder="Décrivez votre problème en détail..."></textarea>
       </div>
       <div class="field">
-        <label>Date du problème</label>
+        <label>Date du problème <span class="req">*</span></label>
         <input type="date" id="f-issue-date">
       </div>
       <div class="field">
-        <label>Avez-vous déjà contacté notre support ?</label>
+        <label>Avez-vous déjà contacté notre support ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-contact">
           <label class="radio-item" onclick="selectRadio(this,'rg-contact')"><input type="radio"><div class="radio-dot"></div>Oui</label>
           <label class="radio-item" onclick="selectRadio(this,'rg-contact')"><input type="radio"><div class="radio-dot"></div>Non</label>
@@ -214,7 +216,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         </div>
       </div>
       <div class="field" style="margin-top:16px;">
-        <label>IBAN (si remboursement bancaire)</label>
+        <label>IBAN (si remboursement bancaire) <span class="req">*</span></label>
         <input type="text" id="f-iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX">
         <div style="font-size:11px;color:#aaa;margin-top:4px;">Utilisé uniquement pour procéder au remboursement.</div>
       </div>
@@ -224,7 +226,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
     <div class="section">
       <div class="section-title" data-num="4">Votre satisfaction</div>
       <div class="field">
-        <label>Note globale de votre expérience</label>
+        <label>Note globale de votre expérience <span class="req">*</span></label>
         <div class="stars" id="stars">
           <span class="star" data-v="1" onclick="setStar(1)">★</span>
           <span class="star" data-v="2" onclick="setStar(2)">★</span>
@@ -235,7 +237,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         <div class="star-label" id="star-label">Cliquez pour noter</div>
       </div>
       <div class="field">
-        <label>La livraison a-t-elle correspondu à vos attentes ?</label>
+        <label>La livraison a-t-elle correspondu à vos attentes ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-delivery">
           <label class="radio-item" onclick="selectRadio(this,'rg-delivery')"><input type="radio"><div class="radio-dot"></div>Oui</label>
           <label class="radio-item" onclick="selectRadio(this,'rg-delivery')"><input type="radio"><div class="radio-dot"></div>Non</label>
@@ -243,7 +245,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         </div>
       </div>
       <div class="field">
-        <label>Probabilité de nous recommander (0 → 10)</label>
+        <label>Probabilité de nous recommander (0 → 10) <span class="req">*</span></label>
         <div class="range-wrap">
           <input type="range" min="0" max="10" value="5" id="f-nps" oninput="updateNPS(this)">
           <div class="range-labels"><span>0 — Pas du tout</span><span id="nps-val">5</span><span>10 — Certainement</span></div>
@@ -255,19 +257,19 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
     <div class="section">
       <div class="section-title" data-num="5">Aidez-nous à nous améliorer</div>
       <div class="field">
-        <label>Qu'est-ce qui vous a le plus déçu ?</label>
+        <label>Qu'est-ce qui vous a le plus déçu ? <span class="req">*</span></label>
         <textarea id="f-dislike" placeholder="La livraison, le produit, le service client..."></textarea>
       </div>
       <div class="field">
-        <label>Qu'est-ce qui vous a satisfait ?</label>
+        <label>Qu'est-ce qui vous a satisfait ? <span class="req">*</span></label>
         <textarea id="f-like" placeholder="Ce que vous avez apprécié..."></textarea>
       </div>
       <div class="field">
-        <label>Que pourrions-nous améliorer ?</label>
+        <label>Que pourrions-nous améliorer ? <span class="req">*</span></label>
         <textarea id="f-improve" placeholder="Vos suggestions..."></textarea>
       </div>
       <div class="field">
-        <label>Comment avez-vous connu notre boutique ?</label>
+        <label>Comment avez-vous connu notre boutique ? <span class="req">*</span></label>
         <select id="f-source">
           <option value="">Sélectionner...</option>
           <option>Réseaux sociaux (Instagram, TikTok...)</option>
@@ -278,7 +280,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         </select>
       </div>
       <div class="field">
-        <label>Recommanderiez-vous notre boutique malgré ce problème ?</label>
+        <label>Recommanderiez-vous notre boutique malgré ce problème ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-recommend">
           <label class="radio-item" onclick="selectRadio(this,'rg-recommend')"><input type="radio"><div class="radio-dot"></div>Oui</label>
           <label class="radio-item" onclick="selectRadio(this,'rg-recommend')"><input type="radio"><div class="radio-dot"></div>Non</label>
@@ -314,7 +316,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 let confirmed = false;
 let starVal = 0;
 
-// Pre-fill from URL params
 const params = new URLSearchParams(window.location.search);
 if (params.get('order'))    document.getElementById('f-order').value    = params.get('order');
 if (params.get('tracking')) document.getElementById('f-tracking').value = params.get('tracking');
@@ -323,13 +324,15 @@ if (params.get('name'))     document.getElementById('f-name').value     = params
 function selectRadio(el, groupId) {
   document.querySelectorAll('#' + groupId + ' .radio-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
+  document.getElementById(groupId).classList.remove('error');
 }
 
 function setStar(v) {
   starVal = v;
-  const labels = ['', 'Très insatisfait', 'Insatisfait', 'Neutre', 'Satisfait', 'Très satisfait'];
+  const labels = ['','Très insatisfait','Insatisfait','Neutre','Satisfait','Très satisfait'];
   document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.dataset.v) <= v));
   document.getElementById('star-label').textContent = labels[v];
+  document.getElementById('stars').classList.remove('error');
 }
 
 function updateNPS(input) {
@@ -351,42 +354,77 @@ function getRadioValue(groupId) {
   return sel ? sel.textContent.trim() : '';
 }
 
-async function submitForm() {
-  const name  = document.getElementById('f-name').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const motif = getRadioValue('rg-motif');
-  const desc  = document.getElementById('f-desc').value.trim();
-  const solution = getRadioValue('rg-solution');
+function validateForm() {
+  let valid = true;
 
-  if (!name || !email) { alert('Veuillez renseigner votre nom et email.'); return; }
-  if (!motif) { alert('Veuillez sélectionner un motif.'); return; }
-  if (!desc) { alert('Veuillez décrire votre problème.'); return; }
-  if (!solution) { alert('Veuillez sélectionner la solution souhaitée.'); return; }
+  // Text / email / textarea fields
+  const required = [
+    { id: 'f-name' }, { id: 'f-email' }, { id: 'f-product' },
+    { id: 'f-desc' }, { id: 'f-iban' },
+    { id: 'f-dislike' }, { id: 'f-like' }, { id: 'f-improve' },
+  ];
+  required.forEach(f => {
+    const el = document.getElementById(f.id);
+    if (!el.value.trim()) { el.classList.add('error'); valid = false; }
+    else el.classList.remove('error');
+  });
+
+  // Date
+  const dateEl = document.getElementById('f-issue-date');
+  if (!dateEl.value) { dateEl.classList.add('error'); valid = false; }
+  else dateEl.classList.remove('error');
+
+  // Select
+  const sourceEl = document.getElementById('f-source');
+  if (!sourceEl.value) { sourceEl.classList.add('error'); valid = false; }
+  else sourceEl.classList.remove('error');
+
+  // Radio groups
+  const radioGroups = ['rg-motif','rg-contact','rg-solution','rg-delivery','rg-recommend'];
+  radioGroups.forEach(g => {
+    if (!getRadioValue(g)) { document.getElementById(g).classList.add('error'); valid = false; }
+    else document.getElementById(g).classList.remove('error');
+  });
+
+  // Stars
+  if (!starVal) { document.getElementById('stars').classList.add('error'); valid = false; }
+
+  if (!valid) {
+    // Scroll to first error
+    const first = document.querySelector('.error');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  return valid;
+}
+
+async function submitForm() {
+  if (!validateForm()) return;
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Envoi en cours...';
 
   const payload = {
-    customer_name:      name,
-    customer_email:     email,
-    order_number:       document.getElementById('f-order').value.trim() || null,
-    tracking_id:        document.getElementById('f-tracking').value.trim() || null,
-    product_name:       document.getElementById('f-product').value.trim() || null,
-    issue_date:         document.getElementById('f-issue-date').value || null,
-    motif,
-    description:        desc,
-    solution,
-    iban:               document.getElementById('f-iban').value.trim() || null,
-    contacted_support:  getRadioValue('rg-contact') || null,
-    rating:             starVal || null,
-    delivery_ok:        getRadioValue('rg-delivery') || null,
-    nps:                parseInt(document.getElementById('f-nps').value),
-    dislike:            document.getElementById('f-dislike').value.trim() || null,
-    liked:              document.getElementById('f-like').value.trim() || null,
-    improve:            document.getElementById('f-improve').value.trim() || null,
-    source:             document.getElementById('f-source').value || null,
-    recommend:          getRadioValue('rg-recommend') || null,
+    customer_name:     document.getElementById('f-name').value.trim(),
+    customer_email:    document.getElementById('f-email').value.trim(),
+    order_number:      document.getElementById('f-order').value.trim() || null,
+    tracking_id:       document.getElementById('f-tracking').value.trim() || null,
+    product_name:      document.getElementById('f-product').value.trim(),
+    issue_date:        document.getElementById('f-issue-date').value,
+    motif:             getRadioValue('rg-motif'),
+    description:       document.getElementById('f-desc').value.trim(),
+    solution:          getRadioValue('rg-solution'),
+    iban:              document.getElementById('f-iban').value.trim(),
+    contacted_support: getRadioValue('rg-contact'),
+    rating:            starVal,
+    delivery_ok:       getRadioValue('rg-delivery'),
+    nps:               parseInt(document.getElementById('f-nps').value),
+    dislike:           document.getElementById('f-dislike').value.trim(),
+    liked:             document.getElementById('f-like').value.trim(),
+    improve:           document.getElementById('f-improve').value.trim(),
+    source:            document.getElementById('f-source').value,
+    recommend:         getRadioValue('rg-recommend'),
   };
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/refunds`, {

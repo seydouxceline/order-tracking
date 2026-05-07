@@ -20,7 +20,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .tab:hover { color: #ccc; }
 .tab.active { color: #fff; border-bottom-color: #fff; }
 
-.container { max-width: 960px; margin: 40px auto; padding: 0 20px 80px; }
+.container { max-width: 1100px; margin: 40px auto; padding: 0 20px 80px; }
 .card { background: #fff; border-radius: 12px; border: 1px solid #efefef; padding: 28px; margin-bottom: 20px; }
 
 h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
@@ -39,6 +39,8 @@ h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
 .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 6px; }
 .btn-outline { background: transparent; color: #111; border: 1px solid #e0e0e0; }
 .btn-outline:hover { background: #f5f5f5; }
+.btn-warn { background: #f59e0b; color: #fff; }
+.btn-warn:hover { background: #d97706; }
 .mt { margin-top: 16px; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -55,6 +57,11 @@ tbody tr:hover td { background: #fafafa; }
 .badge.customs    { background: #fffbeb; color: #92400e; }
 .badge.approach   { background: #ecfdf5; color: #065f46; }
 .badge.delivered  { background: #f0fdf4; color: #14532d; }
+
+/* Mode badges (auto/manuel) */
+.mode-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; display: inline-block; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.mode-badge.auto { background: #dbeafe; color: #1e40af; }
+.mode-badge.manual { background: #fef3c7; color: #92400e; }
 
 /* Refund badges */
 .rbadge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-block; }
@@ -225,8 +232,8 @@ const STATUSES = [
   { value: 'processing', label: '⚙ En préparation' },
   { value: 'shipped',    label: '🚛 En transit — Sofia' },
   { value: 'transit',    label: '🚛 En transit — Leipzig' },
-  { value: 'customs',    label: '🛃 Douane — Karlsruhe' },
-  { value: 'approach',   label: '📍 En approche — France' },
+  { value: 'customs',    label: '🛃 Douane' },
+  { value: 'approach',   label: '📍 En approche' },
   { value: 'delivered',  label: '✅ Livré' },
 ];
 
@@ -238,6 +245,41 @@ const REFUND_STATUSES = [
 
 let allOrders = [];
 let allRefunds = [];
+
+// === Auto-statut basé sur jours ouvrés ===
+function getBusinessDaysElapsed(orderDate) {
+  const start = new Date(orderDate);
+  const today = new Date();
+  let count = 0;
+  const cur = new Date(start);
+  cur.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  while (cur < today) {
+    cur.setDate(cur.getDate() + 1);
+    const day = cur.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
+function calculateAutoStatus(orderDate) {
+  if (!orderDate) return 'confirmed';
+  const days = getBusinessDaysElapsed(orderDate);
+  if (days < 3) return 'confirmed';
+  if (days < 13) return 'processing';
+  if (days < 23) return 'shipped';
+  if (days < 33) return 'transit';
+  if (days < 48) return 'customs';
+  if (days < 60) return 'approach';
+  return 'delivered';
+}
+
+function getDisplayStatus(order) {
+  // Si auto_status === false -> on prend le statut en base
+  // Sinon -> on calcule depuis order_date
+  if (order.auto_status === false) return order.status || 'confirmed';
+  return calculateAutoStatus(order.order_date || order.created_at);
+}
 
 function checkLogin() {
   const pw = document.getElementById('pwInput').value;
@@ -293,7 +335,7 @@ async function createOrder() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
     method: 'POST',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed' })
+    body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed', auto_status: true, order_date: new Date().toISOString() })
   });
 
   if (res.ok) {
@@ -321,9 +363,11 @@ async function loadOrders() {
 
 function renderStats(orders) {
   const total    = orders.length;
-  const transit  = orders.filter(o => ['shipped','transit','customs'].includes(o.status)).length;
-  const approach = orders.filter(o => o.status === 'approach').length;
-  const delivered= orders.filter(o => o.status === 'delivered').length;
+  // Stats basées sur le statut affiché (auto-calculé ou manuel)
+  const statuses = orders.map(o => getDisplayStatus(o));
+  const transit  = statuses.filter(s => ['shipped','transit','customs'].includes(s)).length;
+  const approach = statuses.filter(s => s === 'approach').length;
+  const delivered= statuses.filter(s => s === 'delivered').length;
   document.getElementById('stats').innerHTML = [
     { val: total,    label: 'Total commandes' },
     { val: transit,  label: 'En transit' },
@@ -350,18 +394,33 @@ function renderTable(orders) {
   }
   const rows = orders.map(o => {
     const trackUrl = `${window.location.origin}/track.html?order=${o.tracking_id}`;
+    const displayStatus = getDisplayStatus(o);
+    const isManual = o.auto_status === false;
+    const modeBadge = isManual 
+      ? '<span class="mode-badge manual" title="Statut figé manuellement">Manuel</span>' 
+      : '<span class="mode-badge auto" title="Calcul automatique selon date">Auto</span>';
+    const resetBtn = isManual 
+      ? `<button class="btn btn-outline btn-sm" onclick="resetToAuto('${o.id}')" title="Repasser en auto">↺ Auto</button>` 
+      : '';
+    
     return `<tr>
       <td><strong>#${o.order_number}</strong></td>
       <td style="color:#888;font-size:12px;">${o.tracking_id}</td>
       <td>${o.customer_name}</td>
       <td style="color:#666;">${o.product_name || '-'}</td>
-      <td><span class="badge ${o.status}">${o.status}</span></td>
+      <td>
+        <span class="badge ${displayStatus}">${displayStatus}</span>
+        ${modeBadge}
+      </td>
       <td>
         <select class="status-select" onchange="updateStatus('${o.id}', this.value)">
-          ${STATUSES.map(s => `<option value="${s.value}" ${s.value===o.status?'selected':''}>${s.label}</option>`).join('')}
+          ${STATUSES.map(s => `<option value="${s.value}" ${s.value===displayStatus?'selected':''}>${s.label}</option>`).join('')}
         </select>
       </td>
-      <td><a class="tracking-link" href="${trackUrl}" target="_blank">Voir →</a></td>
+      <td style="display:flex;gap:6px;align-items:center;">
+        <a class="tracking-link" href="${trackUrl}" target="_blank">Voir →</a>
+        ${resetBtn}
+      </td>
       <td><button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier</button></td>
     </tr>`;
   }).join('');
@@ -375,10 +434,21 @@ function renderTable(orders) {
 }
 
 async function updateStatus(id, status) {
+  // Modification manuelle -> on bascule en mode "manuel" (auto_status = false)
   await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
     method: 'PATCH',
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status, updated_at: new Date().toISOString() })
+    body: JSON.stringify({ status, auto_status: false, updated_at: new Date().toISOString() })
+  });
+  loadOrders();
+}
+
+async function resetToAuto(id) {
+  if (!confirm('Repasser cette commande en mode automatique ? Le statut sera recalculé selon la date de commande.')) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ auto_status: true, updated_at: new Date().toISOString() })
   });
   loadOrders();
 }

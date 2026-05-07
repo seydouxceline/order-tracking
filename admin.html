@@ -471,10 +471,32 @@ function copyLink(tracking_id) {
 // ===== REMBOURSEMENTS =====
 
 async function loadRefunds() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/refunds?order=created_at.desc`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  const [refundsRes, ordersRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/refunds?order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    }),
+    fetch(`${SUPABASE_URL}/rest/v1/orders?select=order_number,order_date,created_at`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    })
+  ]);
+  
+  allRefunds = await refundsRes.json();
+  const orders = await ordersRes.json();
+  
+  // Map order_number -> order_date pour lookup rapide
+  const orderDateMap = {};
+  orders.forEach(o => {
+    if (o.order_number) {
+      orderDateMap[String(o.order_number).trim().toLowerCase()] = o.order_date || o.created_at;
+    }
   });
-  allRefunds = await res.json();
+  
+  // Enrichir chaque refund avec la date de commande
+  allRefunds.forEach(r => {
+    const orderNum = String(r.order_number || '').trim().toLowerCase().replace(/^#/, '');
+    r._order_date = orderDateMap[orderNum] || orderDateMap['#' + orderNum] || null;
+  });
+  
   renderRefundStats(allRefunds);
   renderRefunds(allRefunds);
 }
@@ -511,10 +533,12 @@ function renderRefunds(refunds) {
   const rows = refunds.map(r => {
     const status = r.refund_status || 'pending';
     const date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : '-';
+    const orderDate = r._order_date ? new Date(r._order_date).toLocaleDateString('fr-FR') : '-';
     return `<tr>
       <td>${date}</td>
       <td><strong>${r.customer_name}</strong><div style="font-size:11px;color:#888;">${r.customer_email}</div></td>
       <td style="color:#666;">${r.order_number || '-'}</td>
+      <td style="color:#666;font-size:12px;">${orderDate}</td>
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.motif || '-'}</td>
       <td>${r.solution || '-'}</td>
       <td><span class="rbadge ${status}">${REFUND_STATUSES.find(s=>s.value===status)?.label || status}</span></td>
@@ -529,7 +553,7 @@ function renderRefunds(refunds) {
   document.getElementById('refundsTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Date</th><th>Client</th><th>Commande</th><th>Motif</th><th>Solution</th><th>Statut</th><th>Modifier</th><th></th>
+        <th>Date demande</th><th>Client</th><th>Commande</th><th>Date commande</th><th>Motif</th><th>Solution</th><th>Statut</th><th>Modifier</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -546,11 +570,13 @@ async function updateRefundStatus(id, status) {
 
 function openRefund(r) {
   const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '-';
+  const orderDate = r._order_date ? new Date(r._order_date).toLocaleDateString('fr-FR') : '-';
   document.getElementById('modal-title').textContent = `Demande — ${r.customer_name}`;
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-field"><label>Client</label><span>${r.customer_name}</span></div>
     <div class="modal-field"><label>Email</label><span>${r.customer_email}</span></div>
     <div class="modal-field"><label>Commande</label><span>${r.order_number || '-'}</span></div>
+    <div class="modal-field"><label>Date commande</label><span>${orderDate}</span></div>
     <div class="modal-field"><label>Suivi</label><span>${r.tracking_id || '-'}</span></div>
     <div class="modal-field"><label>Produit</label><span>${r.product_name || '-'}</span></div>
     <div class="modal-field"><label>Date problème</label><span>${r.issue_date || '-'}</span></div>

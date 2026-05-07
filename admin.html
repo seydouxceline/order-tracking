@@ -403,8 +403,18 @@ function renderTable(orders) {
       ? `<button class="btn btn-outline btn-sm" onclick="resetToAuto('${o.id}')" title="Repasser en auto">↺ Auto</button>` 
       : '';
     
+    // Date commande + jours écoulés
+    const orderDate = o.order_date || o.created_at;
+    const dateStr = orderDate ? new Date(orderDate).toLocaleDateString('fr-FR') : '-';
+    const daysElapsed = orderDate ? getBusinessDaysElapsed(orderDate) : 0;
+    const daysLabel = orderDate ? `<div style="font-size:11px;color:#888;">J+${daysElapsed} ouvré${daysElapsed > 1 ? 's' : ''}</div>` : '';
+    
     return `<tr>
       <td><strong>#${o.order_number}</strong></td>
+      <td>
+        <div>${dateStr}</div>
+        ${daysLabel}
+      </td>
       <td style="color:#888;font-size:12px;">${o.tracking_id}</td>
       <td>${o.customer_name}</td>
       <td style="color:#666;">${o.product_name || '-'}</td>
@@ -427,7 +437,7 @@ function renderTable(orders) {
   document.getElementById('ordersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Commande</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
+        <th>Commande</th><th>Date</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;

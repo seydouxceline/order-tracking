@@ -282,6 +282,60 @@ body {
   padding: 60px;
   color: #6b7280;
 }
+
+.faq-section {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.faq-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.faq-item {
+  border-bottom: 1px solid #f0f0f0;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-question {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 18px 0;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.faq-question:hover { color: #2563eb; }
+.faq-icon {
+  font-size: 20px;
+  color: #9ca3af;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+.faq-item.open .faq-answer {
+  max-height: 300px;
+  padding-bottom: 18px;
+}
 </style>
 </head>
 <body>
@@ -361,6 +415,27 @@ const translations = {
     customerLabel: "Client",
     productLabel: "Produit",
     referenceLabel: "Référence",
+    shippedFromLabel: "Expédié depuis",
+    shippedFromValue: "Hub Logistique Istanbul, Turquie",
+    faqTitle: "Questions fréquentes",
+    faq: [
+      {
+        q: "Pourquoi mon colis est-il bloqué en douane ?",
+        a: "Tous les colis internationaux passent par la douane. Le dédouanement se fait automatiquement et aucune action n'est requise de votre part. Cette étape peut prendre plusieurs jours selon le volume traité."
+      },
+      {
+        q: "Le suivi n'a pas changé depuis plusieurs jours, est-ce normal ?",
+        a: "Si vous ne constatez aucun changement de statut depuis plus de plusieurs jours, n'hésitez pas à contacter notre support qui vous répondra rapidement."
+      },
+      {
+        q: "Que faire si je ne suis pas chez moi à la livraison ?",
+        a: "Le transporteur laissera un avis de passage. Vous pourrez récupérer votre colis au point relais le plus proche indiqué sur l'avis, ou planifier une nouvelle livraison."
+      },
+      {
+        q: "Mon colis a-t-il été perdu ?",
+        a: "Si aucun mouvement n'apparaît depuis plus de 60 jours ouvrés, contactez notre support qui ouvrira une enquête auprès du transporteur."
+      }
+    ],
     stepsLabel: "ÉTAPES",
     questionLabel: "Une question ?",
     contactSupport: "Contacter le support →",
@@ -415,6 +490,27 @@ const translations = {
     customerLabel: "Kunde",
     productLabel: "Produkt",
     referenceLabel: "Referenz",
+    shippedFromLabel: "Versand ab",
+    shippedFromValue: "Logistikzentrum Istanbul, Türkei",
+    faqTitle: "Häufig gestellte Fragen",
+    faq: [
+      {
+        q: "Warum ist mein Paket beim Zoll?",
+        a: "Alle internationalen Pakete durchlaufen die Zollabfertigung. Diese erfolgt automatisch und erfordert keine Aktion Ihrerseits. Dieser Schritt kann je nach Bearbeitungsvolumen mehrere Tage dauern."
+      },
+      {
+        q: "Der Status hat sich seit mehreren Tagen nicht geändert, ist das normal?",
+        a: "Falls Sie seit mehr als einigen Tagen keine Statusänderung feststellen, kontaktieren Sie bitte unseren Support, der Ihnen schnell antworten wird."
+      },
+      {
+        q: "Was tun, wenn ich bei der Lieferung nicht zu Hause bin?",
+        a: "Der Zusteller hinterlässt eine Benachrichtigung. Sie können Ihr Paket bei der nächstgelegenen Abholstation abholen oder einen neuen Liefertermin vereinbaren."
+      },
+      {
+        q: "Ist mein Paket verloren gegangen?",
+        a: "Falls seit mehr als 60 Werktagen keine Bewegung erfolgt ist, kontaktieren Sie unseren Support, der eine Anfrage beim Transportdienst eröffnen wird."
+      }
+    ],
     stepsLabel: "SCHRITTE",
     questionLabel: "Eine Frage?",
     contactSupport: "Support kontaktieren →",
@@ -729,6 +825,10 @@ async function renderOrder(order) {
             <div class="sidebar-value">#${order.order_number}</div>
           </div>
           <div class="sidebar-section">
+            <div class="sidebar-info">${t.shippedFromLabel}</div>
+            <div class="sidebar-value" style="font-size:13px;">${t.shippedFromValue}</div>
+          </div>
+          <div class="sidebar-section">
             <div class="sidebar-label">${t.stepsLabel}</div>
             <ul class="timeline">${timelineHTML}</ul>
           </div>
@@ -743,10 +843,28 @@ async function renderOrder(order) {
         <div class="progress-fill ${progressClass}" style="width: ${progressValue}%"></div>
       </div>
     </div>
+    
+    <div class="faq-section">
+      <div class="faq-title">${t.faqTitle}</div>
+      ${t.faq.map((item, i) => `
+        <div class="faq-item" data-faq="${i}">
+          <button class="faq-question" onclick="toggleFaq(${i})">
+            <span>${item.q}</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer"><div style="padding-top:4px;">${item.a}</div></div>
+        </div>
+      `).join('')}
+    </div>
   `;
   
   // Initialiser carte
   initMap(route, truckIdx, status);
+}
+
+function toggleFaq(index) {
+  const item = document.querySelector(`[data-faq="${index}"]`);
+  if (item) item.classList.toggle('open');
 }
 
 function initMap(route, truckIdx, status) {

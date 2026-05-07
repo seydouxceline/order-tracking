@@ -188,10 +188,38 @@ tbody tr:hover td { background: #fafafa; }
       </div>
 
       <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <h2 style="margin-bottom:0;">Commandes</h2>
           <input type="text" id="searchInput" placeholder="Rechercher..." oninput="filterOrders()" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;width:220px;">
         </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;padding:12px;background:#f9fafb;border-radius:10px;">
+          <select id="filterStatus" onchange="filterOrders()" style="padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:white;">
+            <option value="">Tous les statuts</option>
+            <option value="confirmed">Confirmée</option>
+            <option value="processing">En préparation</option>
+            <option value="shipped">Expédiée</option>
+            <option value="transit">En transit</option>
+            <option value="customs">Douane</option>
+            <option value="approach">En approche</option>
+            <option value="delivered">Livrée</option>
+          </select>
+          <select id="filterStore" onchange="filterOrders()" style="padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:white;">
+            <option value="">Tous les stores</option>
+          </select>
+          <select id="filterMode" onchange="filterOrders()" style="padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:white;">
+            <option value="">Auto + Manuel</option>
+            <option value="auto">Auto uniquement</option>
+            <option value="manual">Manuel uniquement</option>
+          </select>
+          <label style="font-size:12px;color:#666;display:flex;align-items:center;gap:6px;">Du
+            <input type="date" id="filterDateFrom" onchange="filterOrders()" style="padding:6px 8px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+          </label>
+          <label style="font-size:12px;color:#666;display:flex;align-items:center;gap:6px;">Au
+            <input type="date" id="filterDateTo" onchange="filterOrders()" style="padding:6px 8px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+          </label>
+          <button class="btn btn-outline btn-sm" onclick="resetFilters()" style="margin-left:auto;">↺ Réinitialiser</button>
+        </div>
+        <div id="filterCount" style="font-size:12px;color:#888;margin-bottom:10px;"></div>
         <div id="ordersTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
       </div>
     </div>
@@ -358,7 +386,8 @@ async function loadOrders() {
   });
   allOrders = await res.json();
   renderStats(allOrders);
-  renderTable(allOrders);
+  populateStoreFilter();
+  filterOrders();
 }
 
 function renderStats(orders) {
@@ -378,13 +407,68 @@ function renderStats(orders) {
 
 function filterOrders() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = allOrders.filter(o =>
-    (o.order_number||'').toLowerCase().includes(q) ||
-    (o.customer_name||'').toLowerCase().includes(q) ||
-    (o.tracking_id||'').toLowerCase().includes(q) ||
-    (o.product_name||'').toLowerCase().includes(q)
-  );
+  const fStatus = document.getElementById('filterStatus').value;
+  const fStore = document.getElementById('filterStore').value;
+  const fMode = document.getElementById('filterMode').value;
+  const fFrom = document.getElementById('filterDateFrom').value;
+  const fTo = document.getElementById('filterDateTo').value;
+  
+  const filtered = allOrders.filter(o => {
+    // Recherche texte
+    if (q && !(
+      (o.order_number||'').toLowerCase().includes(q) ||
+      (o.customer_name||'').toLowerCase().includes(q) ||
+      (o.tracking_id||'').toLowerCase().includes(q) ||
+      (o.product_name||'').toLowerCase().includes(q)
+    )) return false;
+    
+    // Filtre statut (utilise le statut affiché, pas le statut DB brut)
+    if (fStatus && getDisplayStatus(o) !== fStatus) return false;
+    
+    // Filtre store
+    if (fStore && (o.store_name || '') !== fStore) return false;
+    
+    // Filtre mode auto/manuel
+    if (fMode === 'auto' && o.auto_status === false) return false;
+    if (fMode === 'manual' && o.auto_status !== false) return false;
+    
+    // Filtre période sur order_date (ou created_at en fallback)
+    const od = o.order_date || o.created_at;
+    if (od) {
+      const date = od.substring(0, 10); // YYYY-MM-DD
+      if (fFrom && date < fFrom) return false;
+      if (fTo && date > fTo) return false;
+    } else if (fFrom || fTo) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  document.getElementById('filterCount').textContent = 
+    filtered.length === allOrders.length 
+      ? `${allOrders.length} commande${allOrders.length > 1 ? 's' : ''}` 
+      : `${filtered.length} sur ${allOrders.length} commande${allOrders.length > 1 ? 's' : ''}`;
+  
   renderTable(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterStatus').value = '';
+  document.getElementById('filterStore').value = '';
+  document.getElementById('filterMode').value = '';
+  document.getElementById('filterDateFrom').value = '';
+  document.getElementById('filterDateTo').value = '';
+  filterOrders();
+}
+
+function populateStoreFilter() {
+  const stores = [...new Set(allOrders.map(o => o.store_name).filter(Boolean))].sort();
+  const sel = document.getElementById('filterStore');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Tous les stores</option>' + 
+    stores.map(s => `<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
 }
 
 function renderTable(orders) {
@@ -418,6 +502,7 @@ function renderTable(orders) {
       <td style="color:#888;font-size:12px;">${o.tracking_id}</td>
       <td>${o.customer_name}</td>
       <td style="color:#666;">${o.product_name || '-'}</td>
+      <td style="font-size:12px;color:#666;">${o.store_name || '-'}</td>
       <td>
         <span class="badge ${displayStatus}">${displayStatus}</span>
         ${modeBadge}
@@ -437,7 +522,7 @@ function renderTable(orders) {
   document.getElementById('ordersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Commande</th><th>Date</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
+        <th>Commande</th><th>Date</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Store</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;

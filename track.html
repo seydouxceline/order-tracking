@@ -31,6 +31,11 @@ body {
   font-size: 24px;
   font-weight: 700;
 }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .header-right {
   display: flex;
   align-items: center;
@@ -282,7 +287,10 @@ body {
 <body>
 <div class="container">
   <div class="header">
-    <h1 id="page-title">Suivi de livraison</h1>
+    <div class="header-left">
+      <img id="store-logo" src="" alt="" style="display:none; height:40px; width:auto;">
+      <h1 id="page-title">Suivi de livraison</h1>
+    </div>
     <div class="header-right">
       <div class="lang-switcher">
         <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
@@ -309,6 +317,35 @@ const SUPABASE_URL = "https://fzmhrsjebncjuifzarqh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.kF7bYLW9Bqm1Lh8x5jHVFUYTU5q9-MzQ0pCFVqVU0mU";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ===== CONFIG STORES =====
+const STORES = {
+  mydealz: {
+    name: "MyDealz",
+    logo: "https://mydealzdeutschland.com/cdn/shop/files/351919-DE_mydealz_thumbnail-a88b62-large-1586932931.png?height=72&v=1777161556",
+    supportEmail: "mydealzzdeutscland@gmail.com"
+  }
+  // Pour ajouter un nouveau store, copier le bloc ci-dessus
+};
+
+function getStoreConfig() {
+  const storeKey = new URLSearchParams(window.location.search).get('store');
+  return storeKey && STORES[storeKey] ? STORES[storeKey] : null;
+}
+
+function applyStore() {
+  const store = getStoreConfig();
+  const logoEl = document.getElementById('store-logo');
+  if (store) {
+    if (store.logo) {
+      logoEl.src = store.logo;
+      logoEl.alt = store.name;
+      logoEl.style.display = 'block';
+    }
+  } else {
+    logoEl.style.display = 'none';
+  }
+}
 
 // ===== TRADUCTIONS =====
 const translations = {
@@ -460,6 +497,7 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 });
 
 applyLang();
+applyStore();
 
 // ===== GÉOCODAGE =====
 async function geocodeCity(city, country) {
@@ -696,7 +734,7 @@ async function renderOrder(order) {
           </div>
           <div class="support-section">
             <div class="support-text">${t.questionLabel}</div>
-            <a href="mailto:support@trackyourorder.co" class="support-link">${t.contactSupport}</a>
+            <a href="mailto:${getStoreConfig()?.supportEmail || 'support@trackyourorder.co'}" class="support-link">${t.contactSupport}</a>
           </div>
         </div>
       </div>

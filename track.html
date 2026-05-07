@@ -3,307 +3,742 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suivi de commande</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<title>Suivi de livraison</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min-height: 100vh; }
-
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #faf8f5;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding: 24px;
+}
+.container { max-width: 980px; margin: 0 auto; }
 .header {
-  background: #fff; border-bottom: 1px solid #efefef;
-  padding: 0 24px; height: 60px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
-.brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
-.live-badge {
-  display: flex; align-items: center; gap: 5px;
-  background: #f0fdf4; border: 1px solid #bbf7d0;
-  border-radius: 20px; padding: 4px 12px;
-  font-size: 11px; color: #16a34a; font-weight: 600;
+.header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
 }
-.live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 1.5s infinite; }
-
-.container { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
-.search-box {
-  background: #fff; border-radius: 14px; border: 1px solid #efefef;
-  padding: 36px; margin-bottom: 28px; text-align: center;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-.search-box h2 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-.search-box p { font-size: 14px; color: #888; margin-bottom: 24px; }
-.search-row { display: flex; gap: 10px; max-width: 480px; margin: 0 auto; }
-.search-row input {
-  flex: 1; padding: 12px 16px; border: 1.5px solid #e0e0e0;
-  border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
-  transition: border-color 0.2s;
+.lang-switcher {
+  display: flex;
+  gap: 8px;
 }
-.search-row input:focus { border-color: #111; }
-.btn {
-  padding: 12px 24px; background: #111; color: #fff;
-  border: none; border-radius: 8px; font-size: 14px;
-  font-family: inherit; cursor: pointer; font-weight: 500; transition: background 0.2s;
+.lang-btn {
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 22px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
 }
-.btn:hover { background: #333; }
-
-.track-card {
-  background: #fff; border-radius: 14px; border: 1px solid #efefef;
-  overflow: hidden; animation: fadeUp 0.4s ease;
+.lang-btn.active { opacity: 1; border-color: #e5e5e5; }
+.lang-btn:hover { opacity: 0.8; }
+.status-badge {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
 }
-.track-top { padding: 24px 28px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: flex-start; }
-.order-ref { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; }
-.order-meta { font-size: 13px; color: #888; margin-top: 4px; }
-.badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-.badge.confirmed, .badge.processing { background: #eff6ff; color: #1d4ed8; }
-.badge.shipped, .badge.transit, .badge.approach { background: #eff6ff; color: #1d4ed8; }
-.badge.customs { background: #fffbeb; color: #92400e; }
-.badge.delivered { background: #f0fdf4; color: #15803d; }
+.status-badge::before { content: '● '; }
 
-.status-band {
-  padding: 14px 28px; display: flex; align-items: flex-start; gap: 12px;
-  border-bottom: 1px solid #f5f5f5; transition: background 0.4s;
+.search-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.status-band.blue { background: #eff6ff; border-bottom-color: #bfdbfe; }
-.status-band.yellow { background: #fffbeb; border-bottom-color: #fde68a; }
-.status-band.green { background: #f0fdf4; border-bottom-color: #bbf7d0; }
-.band-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
-.band-text { font-size: 14px; font-weight: 600; }
-.band-text.blue { color: #1d4ed8; }
-.band-text.yellow { color: #92400e; }
-.band-text.green { color: #15803d; }
-.band-sub { font-size: 12px; margin-top: 3px; line-height: 1.5; }
-.band-sub.blue { color: #3b82f6; }
-.band-sub.yellow { color: #d97706; }
-.band-sub.green { color: #16a34a; }
-
-.track-body { display: grid; grid-template-columns: 1fr 300px; }
-.map-col { border-right: 1px solid #f5f5f5; display: flex; flex-direction: column; }
-#map { flex: 1; min-height: 320px; z-index: 1; }
-
-.progress-wrap { padding: 16px 20px; border-top: 1px solid #f5f5f5; }
-.progress-bar { height: 3px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease, background 0.4s; }
-
-.sidebar { padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
-.sidebar-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #bbb; margin-bottom: 12px; }
-
-.info-list { display: flex; flex-direction: column; gap: 8px; }
-.info-row { display: flex; flex-direction: column; }
-.info-row span:first-child { font-size: 11px; color: #aaa; }
-.info-row span:last-child { font-size: 13px; font-weight: 500; color: #111; }
-
-.step-row { display: flex; align-items: flex-start; gap: 10px; }
-.step-col { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; }
-.step-dot {
-  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 600; transition: all 0.3s;
+.search-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  margin-bottom: 8px;
 }
-.dot-done { background: #f0fdf4; border: 1.5px solid #86efac; color: #16a34a; }
-.dot-current { background: #eff6ff; border: 2px solid #3b82f6; color: #3b82f6; }
-.dot-current.yellow { background: #fffbeb; border-color: #f59e0b; color: #d97706; }
-.dot-pending { background: #f9fafb; border: 1.5px solid #e5e7eb; color: #d1d5db; }
-.step-line { width: 2px; flex: 1; min-height: 16px; margin: 3px 0; background: #f3f4f6; }
-.step-line.done { background: #d1fae5; }
-.step-info { padding-bottom: 14px; padding-top: 1px; }
-.step-info:last-child { padding-bottom: 0; }
-.step-name { font-size: 12px; font-weight: 500; color: #374151; }
-.step-name.done { color: #9ca3af; font-weight: 400; }
-.step-name.pending { color: #d1d5db; }
-.step-time { font-size: 11px; color: #9ca3af; margin-top: 1px; }
-.step-time.current { color: #3b82f6; font-weight: 500; }
-.step-time.yellow { color: #d97706; font-weight: 500; }
+.search-card p { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
+.search-form {
+  display: flex;
+  gap: 12px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.search-input {
+  flex: 1;
+  padding: 14px 18px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+}
+.search-btn {
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+}
 
-.contact-link { font-size: 12px; color: #aaa; text-align: center; line-height: 1.8; border-top: 1px solid #f5f5f5; padding-top: 16px; }
-.contact-link a { color: #3b82f6; font-weight: 500; text-decoration: none; }
+.order-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.order-header {
+  padding: 28px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f0f0;
+}
+.order-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+.order-subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
+.order-status {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.order-status.confirmed { background: #dbeafe; color: #1e40af; }
+.order-status.processing { background: #dbeafe; color: #1e40af; }
+.order-status.transit { background: #fef3c7; color: #92400e; }
+.order-status.customs { background: #fef3c7; color: #92400e; }
+.order-status.approach { background: #fef3c7; color: #92400e; }
+.order-status.delivered { background: #d1fae5; color: #065f46; }
 
-.msg-box { text-align: center; padding: 60px 20px; color: #888; font-size: 14px; }
+.status-banner {
+  margin: 24px 32px;
+  padding: 18px 22px;
+  border-radius: 12px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.status-banner.confirmed { background: #eff6ff; }
+.status-banner.processing { background: #eff6ff; }
+.status-banner.transit { background: #fffbeb; }
+.status-banner.customs { background: #fffbeb; }
+.status-banner.approach { background: #fffbeb; }
+.status-banner.delivered { background: #ecfdf5; }
+.status-banner-icon { font-size: 24px; }
+.status-banner-content h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.status-banner.confirmed h3 { color: #1e40af; }
+.status-banner.processing h3 { color: #1e40af; }
+.status-banner.transit h3, .status-banner.customs h3, .status-banner.approach h3 { color: #92400e; }
+.status-banner.delivered h3 { color: #065f46; }
+.status-banner-content p { font-size: 14px; }
+.status-banner.confirmed p, .status-banner.processing p { color: #1e40af; }
+.status-banner.transit p, .status-banner.customs p, .status-banner.approach p { color: #92400e; }
+.status-banner.delivered p { color: #065f46; }
 
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0;
+}
+@media (max-width: 768px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
 
-@media (max-width: 680px) {
-  .track-body { grid-template-columns: 1fr; }
-  .map-col { border-right: none; border-bottom: 1px solid #f5f5f5; }
-  #map { min-height: 240px; }
-  .track-top { flex-direction: column; gap: 10px; }
+#map { height: 480px; }
+@media (max-width: 768px) { #map { height: 320px; } }
+
+.sidebar {
+  padding: 28px;
+  border-left: 1px solid #f0f0f0;
+}
+@media (max-width: 768px) {
+  .sidebar { border-left: none; border-top: 1px solid #f0f0f0; }
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.sidebar-info { font-size: 14px; margin-bottom: 4px; color: #4b5563; }
+.sidebar-value { font-size: 15px; font-weight: 600; }
+
+.timeline {
+  list-style: none;
+}
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  position: relative;
+}
+.timeline-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: white;
+  position: relative;
+  z-index: 2;
+}
+.timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 30px;
+  width: 2px;
+  height: calc(100% - 12px);
+  background: #e5e5e5;
+}
+.timeline-item.completed .timeline-icon { border-color: #22c55e; background: #22c55e; color: white; }
+.timeline-item.completed::after { background: #22c55e; }
+.timeline-item.active .timeline-icon { border-color: #f59e0b; }
+.timeline-item.active .timeline-icon::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+.timeline-content { flex: 1; }
+.timeline-title { font-weight: 600; font-size: 14px; }
+.timeline-status { font-size: 12px; color: #9ca3af; }
+.timeline-item.completed .timeline-status { color: #22c55e; }
+.timeline-item.active .timeline-status { color: #f59e0b; font-weight: 600; }
+
+.support-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+.support-text { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+.support-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: #f0f0f0;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: #f59e0b;
+  transition: width 0.3s;
+}
+.progress-fill.completed { background: #22c55e; }
+.progress-fill.confirmed { background: #3b82f6; }
+
+.error-msg {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  margin-top: 24px;
+}
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #6b7280;
 }
 </style>
 </head>
 <body>
-
-<div class="header">
-  <span class="brand">Suivi de livraison</span>
-  <div class="live-badge" id="live-badge" style="display:none;"><div class="live-dot"></div>EN ROUTE</div>
-</div>
-
 <div class="container">
-  <div class="search-box">
-    <h2>Suivre ma commande</h2>
-    <p>Entrez votre numéro de suivi reçu par email</p>
-    <div class="search-row">
-      <input type="text" id="trackInput" placeholder="ex: TRK-2026-00001" />
-      <button class="btn" onclick="searchOrder()">Rechercher</button>
+  <div class="header">
+    <h1 id="page-title">Suivi de livraison</h1>
+    <div class="header-right">
+      <div class="lang-switcher">
+        <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
+        <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+      </div>
+      <span class="status-badge" id="route-badge">EN ROUTE</span>
     </div>
   </div>
-  <div id="result"></div>
+
+  <div class="search-card">
+    <h2 id="search-title">Suivre ma commande</h2>
+    <p id="search-subtitle">Entrez votre numéro de suivi reçu par email</p>
+    <form class="search-form" id="search-form">
+      <input type="text" class="search-input" id="tracking-input" placeholder="TRK-12345678" required>
+      <button type="submit" class="search-btn" id="search-btn">Rechercher</button>
+    </form>
+  </div>
+
+  <div id="result-container"></div>
 </div>
 
 <script>
-const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
+const SUPABASE_URL = "https://fzmhrsjebncjuifzarqh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.kF7bYLW9Bqm1Lh8x5jHVFUYTU5q9-MzQ0pCFVqVU0mU";
 
-const CHECKPOINT_MAP = {
-  confirmed:  { lat: 41.0082, lng: 28.9784, lineIdx: 0 },
-  processing: { lat: 41.0082, lng: 28.9784, lineIdx: 0 },
-  shipped:    { lat: 42.6977, lng: 23.3219, lineIdx: 1 }, // Sofia
-  transit:    { lat: 51.3397, lng: 12.3731, lineIdx: 3 }, // Leipzig
-  customs:    { lat: 48.9936, lng: 8.3985,  lineIdx: 4 }, // Karlsruhe
-  approach:   { lat: 48.8566, lng: 2.3522,  lineIdx: 5 }, // Paris
-  delivered:  { lat: 46.2276, lng: 2.2137,  lineIdx: 5 },
-};
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const ROUTE_PATH = [
-  [41.0082, 28.9784], // Istanbul
-  [42.6977, 23.3219], // Sofia
-  [47.4979, 19.0402], // Budapest
-  [51.3397, 12.3731], // Leipzig
-  [48.9936, 8.3985],  // Karlsruhe
-  [48.8566, 2.3522],  // France
-];
-
-// 5 steps visible to client
-const CLIENT_STEPS = ['Commande confirmée', 'En préparation', 'En transit', 'En approche', 'Livré'];
-
-const CLIENT_VIEW = {
-  confirmed:  { label: 'Commande confirmée', sub: 'Votre commande a bien été reçue et validée.',              theme: 'blue',   icon: '✓',  stepIdx: 0, isCustoms: false },
-  processing: { label: 'En préparation',     sub: 'Votre colis est en cours de préparation à Istanbul.',      theme: 'blue',   icon: '⚙️', stepIdx: 1, isCustoms: false },
-  shipped:    { label: 'En transit',         sub: 'Hub logistique · Sofia, Bulgarie',                         theme: 'blue',   icon: '🚛', stepIdx: 2, isCustoms: false },
-  transit:    { label: 'En transit',         sub: 'Centre de tri DHL · Leipzig, Allemagne',                   theme: 'blue',   icon: '🚛', stepIdx: 2, isCustoms: false },
-  customs:    { label: 'En transit',         sub: 'Votre colis est momentanément retenu en douane — traitement en cours, aucune action requise de votre part.', theme: 'yellow', icon: '🚛', stepIdx: 2, isCustoms: true },
-  approach:   { label: 'En approche',        sub: 'Votre colis est arrivé en France.',                        theme: 'blue',   icon: '📍', stepIdx: 3, isCustoms: false },
-  delivered:  { label: 'Livré',              sub: 'Votre commande a été livrée. Merci pour votre confiance !',theme: 'green',  icon: '✅', stepIdx: 4, isCustoms: false },
-};
-
-let mapInstance = null;
-
-const params = new URLSearchParams(window.location.search);
-const orderParam = params.get('order') || params.get('tracking');
-if (orderParam) {
-  document.getElementById('trackInput').value = orderParam;
-  searchOrder();
-}
-
-async function searchOrder() {
-  const val = document.getElementById('trackInput').value.trim();
-  if (!val) return;
-  document.getElementById('result').innerHTML = '<div class="msg-box">Recherche en cours...</div>';
-  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
-  document.getElementById('live-badge').style.display = 'none';
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/orders?or=(tracking_id.eq.${val},order_number.eq.${val})&limit=1`,
-    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-  );
-  const data = await res.json();
-  if (!data.length) {
-    document.getElementById('result').innerHTML = '<div class="msg-box">Aucune commande trouvée avec ce numéro.</div>';
-    return;
+// ===== TRADUCTIONS =====
+const translations = {
+  fr: {
+    pageTitle: "Suivi de livraison",
+    routeBadge: "EN ROUTE",
+    searchTitle: "Suivre ma commande",
+    searchSubtitle: "Entrez votre numéro de suivi reçu par email",
+    searchBtn: "Rechercher",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Suivi",
+    orderLabel: "COMMANDE",
+    customerLabel: "Client",
+    productLabel: "Produit",
+    referenceLabel: "Référence",
+    stepsLabel: "ÉTAPES",
+    questionLabel: "Une question ?",
+    contactSupport: "Contacter le support →",
+    loading: "Chargement...",
+    notFound: "Aucune commande trouvée avec ce numéro de suivi.",
+    statuses: {
+      confirmed: "Commande confirmée",
+      processing: "En préparation",
+      transit: "En transit",
+      customs: "En transit",
+      approach: "En approche",
+      delivered: "Livré"
+    },
+    timelineSteps: {
+      confirmed: "Commande confirmée",
+      processing: "En préparation",
+      transit: "En transit",
+      approach: "En approche",
+      delivered: "Livré"
+    },
+    timelineStatus: {
+      completed: "Complété",
+      pending: "En attente",
+      inProgress: "En cours",
+      customs: "Retenu en douane"
+    },
+    banners: {
+      confirmed: { title: "Commande confirmée", text: "Votre commande a bien été reçue et validée." },
+      processing: { title: "En préparation", text: "Votre commande est en cours de préparation dans notre entrepôt." },
+      transit: { title: "En transit", text: "Votre colis est en route vers la France." },
+      customs: { title: "En transit", text: "Votre colis est momentanément retenu en douane — traitement en cours, aucune action requise de votre part." },
+      approach: { title: "En approche", text: "Votre colis approche de votre adresse de livraison." },
+      delivered: { title: "Livré", text: "Votre commande a été livrée avec succès." }
+    },
+    cities: {
+      istanbul: "Istanbul",
+      sofia: "Sofia",
+      leipzig: "Leipzig",
+      karlsruhe: "Karlsruhe (Douane)",
+      frankfurt: "Frankfurt (Douane)"
+    }
+  },
+  de: {
+    pageTitle: "Lieferverfolgung",
+    routeBadge: "UNTERWEGS",
+    searchTitle: "Bestellung verfolgen",
+    searchSubtitle: "Geben Sie Ihre per E-Mail erhaltene Sendungsnummer ein",
+    searchBtn: "Suchen",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Verfolgung",
+    orderLabel: "BESTELLUNG",
+    customerLabel: "Kunde",
+    productLabel: "Produkt",
+    referenceLabel: "Referenz",
+    stepsLabel: "SCHRITTE",
+    questionLabel: "Eine Frage?",
+    contactSupport: "Support kontaktieren →",
+    loading: "Wird geladen...",
+    notFound: "Keine Bestellung mit dieser Sendungsnummer gefunden.",
+    statuses: {
+      confirmed: "Bestellung bestätigt",
+      processing: "In Vorbereitung",
+      transit: "Unterwegs",
+      customs: "Unterwegs",
+      approach: "In Anfahrt",
+      delivered: "Geliefert"
+    },
+    timelineSteps: {
+      confirmed: "Bestellung bestätigt",
+      processing: "In Vorbereitung",
+      transit: "Unterwegs",
+      approach: "In Anfahrt",
+      delivered: "Geliefert"
+    },
+    timelineStatus: {
+      completed: "Abgeschlossen",
+      pending: "Ausstehend",
+      inProgress: "In Bearbeitung",
+      customs: "Beim Zoll"
+    },
+    banners: {
+      confirmed: { title: "Bestellung bestätigt", text: "Ihre Bestellung wurde erfolgreich empfangen und bestätigt." },
+      processing: { title: "In Vorbereitung", text: "Ihre Bestellung wird in unserem Lager vorbereitet." },
+      transit: { title: "Unterwegs", text: "Ihr Paket ist auf dem Weg nach Deutschland." },
+      customs: { title: "Unterwegs", text: "Ihr Paket wird vorübergehend beim Zoll bearbeitet — keine Aktion Ihrerseits erforderlich." },
+      approach: { title: "In Anfahrt", text: "Ihr Paket nähert sich Ihrer Lieferadresse." },
+      delivered: { title: "Geliefert", text: "Ihre Bestellung wurde erfolgreich zugestellt." }
+    },
+    cities: {
+      istanbul: "Istanbul",
+      sofia: "Sofia",
+      leipzig: "Leipzig",
+      karlsruhe: "Karlsruhe (Zoll)",
+      frankfurt: "Frankfurt (Zoll)"
+    }
   }
-  renderOrder(data[0]);
+};
+
+// ===== GESTION LANGUE =====
+function detectLang() {
+  const stored = localStorage.getItem('trackLang');
+  if (stored && translations[stored]) return stored;
+  const browser = (navigator.language || 'fr').toLowerCase();
+  return browser.startsWith('de') ? 'de' : 'fr';
 }
 
-function renderOrder(order) {
-  const status = order.status || 'confirmed';
-  const view = CLIENT_VIEW[status] || CLIENT_VIEW.confirmed;
-  const cp = CHECKPOINT_MAP[status] || CHECKPOINT_MAP.confirmed;
-  const pct = Math.round((cp.lineIdx / (ROUTE_PATH.length - 1)) * 100);
-  const lineColor = view.theme === 'yellow' ? '#f59e0b' : view.theme === 'green' ? '#22c55e' : '#3b82f6';
+let currentLang = detectLang();
 
-  if (status !== 'delivered') document.getElementById('live-badge').style.display = 'flex';
+function applyLang() {
+  const t = translations[currentLang];
+  document.documentElement.lang = currentLang;
+  document.title = t.pageTitle;
+  document.getElementById('page-title').textContent = t.pageTitle;
+  document.getElementById('route-badge').textContent = t.routeBadge;
+  document.getElementById('search-title').textContent = t.searchTitle;
+  document.getElementById('search-subtitle').textContent = t.searchSubtitle;
+  document.getElementById('search-btn').textContent = t.searchBtn;
+  document.getElementById('tracking-input').placeholder = t.searchPlaceholder;
+  
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
 
-  const stepsHtml = CLIENT_STEPS.map((s, i) => {
-    const done    = i < view.stepIdx;
-    const current = i === view.stepIdx;
-    const pending = i > view.stepIdx;
-    const isLast  = i === CLIENT_STEPS.length - 1;
-    const isCustomsCurrent = current && view.isCustoms;
-    return `<div class="step-row">
-      <div class="step-col">
-        <div class="step-dot ${done ? 'dot-done' : current ? (isCustomsCurrent ? 'dot-current yellow' : 'dot-current') : 'dot-pending'}">${done ? '✓' : current ? '●' : ''}</div>
-        ${!isLast ? `<div class="step-line ${done ? 'done' : ''}"></div>` : ''}
-      </div>
-      <div class="step-info">
-        <div class="step-name ${done ? 'done' : pending ? 'pending' : ''}">${s}</div>
-        <div class="step-time ${current ? (isCustomsCurrent ? 'yellow' : 'current') : ''}">${done ? 'Complété' : current ? (isCustomsCurrent ? 'Retenu en douane' : 'En cours') : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    localStorage.setItem('trackLang', currentLang);
+    applyLang();
+    // Re-render si une commande est affichée
+    const trackingId = new URLSearchParams(window.location.search).get('order');
+    if (trackingId) loadOrder(trackingId);
+  });
+});
 
-  document.getElementById('result').innerHTML = `
-    <div class="track-card">
-      <div class="track-top">
-        <div>
-          <div class="order-ref">#${order.order_number}</div>
-          <div class="order-meta">Suivi : ${order.tracking_id}</div>
-        </div>
-        <span class="badge ${status}">${view.label}</span>
-      </div>
-      <div class="status-band ${view.theme}">
-        <div class="band-icon">${view.icon}</div>
-        <div>
-          <div class="band-text ${view.theme}">${view.label}</div>
-          <div class="band-sub ${view.theme}">${view.sub}</div>
-        </div>
-      </div>
-      <div class="track-body">
-        <div class="map-col">
-          <div id="map"></div>
-          <div class="progress-wrap">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width:${pct}%;background:${lineColor};"></div>
-            </div>
-          </div>
-        </div>
-        <div class="sidebar">
-          <div>
-            <div class="sidebar-label">Commande</div>
-            <div class="info-list">
-              <div class="info-row"><span>Client</span><span>${order.customer_name || '-'}</span></div>
-              <div class="info-row"><span>Produit</span><span>${order.product_name || '-'}</span></div>
-              <div class="info-row"><span>Référence</span><span>#${order.order_number}</span></div>
-            </div>
-          </div>
-          <div>
-            <div class="sidebar-label">Étapes</div>
-            ${stepsHtml}
-          </div>
-          <div class="contact-link">
-            Une question ?<br>
-            <a href="mailto:support@trackyourorder.co">Contacter le support →</a>
-          </div>
-        </div>
-      </div>
-    </div>`;
+applyLang();
 
-  setTimeout(() => {
-    mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([cp.lat, cp.lng], 5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(mapInstance);
-    L.polyline(ROUTE_PATH, { color: '#e5e7eb', weight: 2, dashArray: '5,5', opacity: 0.8 }).addTo(mapInstance);
-    if (cp.lineIdx > 0) {
-      L.polyline(ROUTE_PATH.slice(0, cp.lineIdx + 1), { color: lineColor, weight: 2.5, opacity: 0.7 }).addTo(mapInstance);
+// ===== GÉOCODAGE =====
+async function geocodeCity(city, country) {
+  if (!city) return null;
+  try {
+    const query = country ? `${city}, ${country}` : city;
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+    const data = await res.json();
+    if (data && data[0]) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
     }
-    if (status !== 'delivered') {
-      const destIcon = L.divIcon({ html: '<div style="font-size:18px">🏠</div>', className: '', iconSize: [22,22], iconAnchor: [11,18] });
-      L.marker(ROUTE_PATH[ROUTE_PATH.length - 1], { icon: destIcon }).addTo(mapInstance);
-    }
-    const truckIcon = L.divIcon({
-      html: `<div style="font-size:20px;filter:drop-shadow(0 2px 5px ${lineColor}88)">${status === 'delivered' ? '✅' : '🚛'}</div>`,
-      className: '', iconSize: [26,26], iconAnchor: [13,13]
+  } catch(e) { console.error('Geocoding error:', e); }
+  return null;
+}
+
+// ===== PARCOURS SELON PAYS =====
+function getRoute(country, clientCity, clientCoords) {
+  const t = translations[currentLang];
+  const isGermany = (country || '').toUpperCase().includes('DE') || 
+                    (country || '').toLowerCase().includes('german') ||
+                    (country || '').toLowerCase().includes('deutsch');
+  
+  const route = [
+    { name: t.cities.istanbul, coords: [41.0082, 28.9784], step: 'transit' },
+    { name: t.cities.sofia, coords: [42.6977, 23.3219], step: 'transit' }
+  ];
+  
+  if (isGermany) {
+    route.push({ name: t.cities.frankfurt, coords: [50.1109, 8.6821], step: 'customs' });
+  } else {
+    route.push({ name: t.cities.leipzig, coords: [51.3397, 12.3731], step: 'transit' });
+    route.push({ name: t.cities.karlsruhe, coords: [49.0069, 8.4037], step: 'customs' });
+  }
+  
+  // Dernière étape : ville du client
+  if (clientCoords) {
+    route.push({ name: clientCity || (isGermany ? 'Berlin' : 'Paris'), coords: clientCoords, step: 'delivered' });
+  } else {
+    // Fallback si géocodage échoue
+    route.push({ 
+      name: clientCity || (isGermany ? 'Berlin' : 'Paris'), 
+      coords: isGermany ? [52.5200, 13.4050] : [48.8566, 2.3522], 
+      step: 'delivered' 
     });
-    L.marker([cp.lat, cp.lng], { icon: truckIcon }).addTo(mapInstance);
-  }, 100);
+  }
+  
+  return route;
+}
+
+// ===== POSITION DU CAMION SELON STATUT =====
+function getTruckPosition(status, route) {
+  // Mapping status -> index dans route
+  const statusToIndex = {
+    confirmed: 0,
+    processing: 0,
+    shipped: 1,
+    transit: route.length === 5 ? 2 : 2, // Sofia ou Leipzig selon trajet
+    customs: route.length === 5 ? 2 : 3, // Frankfurt si DE, Karlsruhe si FR
+    approach: route.length - 2,
+    delivered: route.length - 1
+  };
+  return statusToIndex[status] !== undefined ? statusToIndex[status] : 0;
+}
+
+// ===== AFFICHAGE COMMANDE =====
+async function loadOrder(trackingId) {
+  const t = translations[currentLang];
+  const container = document.getElementById('result-container');
+  container.innerHTML = `<div class="loading">${t.loading}</div>`;
+  
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('tracking_id', trackingId)
+      .single();
+    
+    if (error || !data) {
+      container.innerHTML = `<div class="error-msg">${t.notFound}</div>`;
+      return;
+    }
+    
+    await renderOrder(data);
+  } catch(e) {
+    container.innerHTML = `<div class="error-msg">${t.notFound}</div>`;
+  }
+}
+
+async function renderOrder(order) {
+  const t = translations[currentLang];
+  const status = order.status || 'confirmed';
+  
+  // Géocodage de la ville client
+  const clientCoords = await geocodeCity(order.city, order.country);
+  const route = getRoute(order.country, order.city, clientCoords);
+  const truckIdx = getTruckPosition(status, route);
+  
+  const banner = t.banners[status] || t.banners.confirmed;
+  const statusLabel = t.statuses[status] || t.statuses.confirmed;
+  
+  // Timeline
+  const timelineKeys = ['confirmed', 'processing', 'transit', 'approach', 'delivered'];
+  const statusOrder = ['confirmed', 'processing', 'shipped', 'transit', 'customs', 'approach', 'delivered'];
+  const currentStatusIdx = statusOrder.indexOf(status);
+  
+  function getTimelineState(key) {
+    const keyMapping = {
+      confirmed: ['confirmed'],
+      processing: ['processing'],
+      transit: ['shipped', 'transit', 'customs'],
+      approach: ['approach'],
+      delivered: ['delivered']
+    };
+    const matches = keyMapping[key];
+    const minIdx = Math.min(...matches.map(s => statusOrder.indexOf(s)));
+    const maxIdx = Math.max(...matches.map(s => statusOrder.indexOf(s)));
+    if (currentStatusIdx > maxIdx) return 'completed';
+    if (currentStatusIdx >= minIdx && currentStatusIdx <= maxIdx) return 'active';
+    return 'pending';
+  }
+  
+  function getTimelineSubtitle(key, state) {
+    if (state === 'completed') return t.timelineStatus.completed;
+    if (state === 'active') {
+      if (key === 'transit' && status === 'customs') return t.timelineStatus.customs;
+      return t.timelineStatus.inProgress;
+    }
+    return t.timelineStatus.pending;
+  }
+  
+  const timelineHTML = timelineKeys.map(key => {
+    const state = getTimelineState(key);
+    return `
+      <li class="timeline-item ${state}">
+        <div class="timeline-icon">${state === 'completed' ? '✓' : ''}</div>
+        <div class="timeline-content">
+          <div class="timeline-title">${t.timelineSteps[key]}</div>
+          <div class="timeline-status">${getTimelineSubtitle(key, state)}</div>
+        </div>
+      </li>
+    `;
+  }).join('');
+  
+  // Calcul progress bar
+  const progressMap = { confirmed: 15, processing: 30, shipped: 45, transit: 55, customs: 60, approach: 80, delivered: 100 };
+  const progressValue = progressMap[status] || 15;
+  const progressClass = status === 'delivered' ? 'completed' : (status === 'confirmed' || status === 'processing' ? 'confirmed' : '');
+  
+  const container = document.getElementById('result-container');
+  container.innerHTML = `
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-title">#${order.order_number}</div>
+          <div class="order-subtitle">${t.trackingLabel} : ${order.tracking_id}</div>
+        </div>
+        <span class="order-status ${status}">${statusLabel}</span>
+      </div>
+      
+      <div class="status-banner ${status}">
+        <div class="status-banner-icon">${status === 'delivered' ? '📦' : status === 'customs' ? '🛃' : '🚚'}</div>
+        <div class="status-banner-content">
+          <h3>${banner.title}</h3>
+          <p>${banner.text}</p>
+        </div>
+      </div>
+      
+      <div class="main-grid">
+        <div id="map"></div>
+        <div class="sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-label">${t.orderLabel}</div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-info">${t.customerLabel}</div>
+            <div class="sidebar-value">${order.customer_name || '-'}</div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-info">${t.productLabel}</div>
+            <div class="sidebar-value">${order.product_name || '-'}</div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-info">${t.referenceLabel}</div>
+            <div class="sidebar-value">#${order.order_number}</div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-label">${t.stepsLabel}</div>
+            <ul class="timeline">${timelineHTML}</ul>
+          </div>
+          <div class="support-section">
+            <div class="support-text">${t.questionLabel}</div>
+            <a href="mailto:support@trackyourorder.co" class="support-link">${t.contactSupport}</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="progress-bar">
+        <div class="progress-fill ${progressClass}" style="width: ${progressValue}%"></div>
+      </div>
+    </div>
+  `;
+  
+  // Initialiser carte
+  initMap(route, truckIdx, status);
+}
+
+function initMap(route, truckIdx, status) {
+  const map = L.map('map', { 
+    zoomControl: false, 
+    scrollWheelZoom: false,
+    dragging: true,
+    attributionControl: false
+  });
+  
+  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+    maxZoom: 18
+  }).addTo(map);
+  
+  // Trace ligne du parcours
+  const points = route.map(p => p.coords);
+  const completedPoints = points.slice(0, truckIdx + 1);
+  const remainingPoints = points.slice(truckIdx);
+  
+  // Ligne déjà parcourue (verte)
+  if (completedPoints.length > 1) {
+    L.polyline(completedPoints, { 
+      color: '#22c55e', 
+      weight: 3,
+      opacity: 0.8
+    }).addTo(map);
+  }
+  
+  // Ligne restante (orange/pointillés)
+  if (remainingPoints.length > 1) {
+    L.polyline(remainingPoints, { 
+      color: '#f59e0b', 
+      weight: 3,
+      opacity: 0.6,
+      dashArray: '8, 8'
+    }).addTo(map);
+  }
+  
+  // Marqueur camion (position actuelle)
+  const truckIcon = L.divIcon({
+    html: '<div style="font-size: 32px;">🚚</div>',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    className: 'truck-marker'
+  });
+  L.marker(route[truckIdx].coords, { icon: truckIcon }).addTo(map);
+  
+  // Marqueur destination (maison)
+  const homeIcon = L.divIcon({
+    html: '<div style="font-size: 28px;">🏠</div>',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    className: 'home-marker'
+  });
+  L.marker(route[route.length - 1].coords, { icon: homeIcon }).addTo(map);
+  
+  // Ajuster zoom
+  const bounds = L.latLngBounds(points);
+  map.fitBounds(bounds, { padding: [40, 40] });
+}
+
+// ===== FORMULAIRE =====
+document.getElementById('search-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const trackingId = document.getElementById('tracking-input').value.trim();
+  if (trackingId) {
+    window.location.href = `?order=${encodeURIComponent(trackingId)}`;
+  }
+});
+
+// ===== AUTO-LOAD AU CHARGEMENT =====
+const urlTracking = new URLSearchParams(window.location.search).get('order');
+if (urlTracking) {
+  document.getElementById('tracking-input').value = urlTracking;
+  loadOrder(urlTracking);
 }
 </script>
 </body>

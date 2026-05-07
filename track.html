@@ -510,6 +510,33 @@ function getRoute(country, clientCity, clientCoords) {
 }
 
 // ===== POSITION DU CAMION SELON STATUT =====
+function getBusinessDaysElapsed(orderDate) {
+  const start = new Date(orderDate);
+  const today = new Date();
+  let count = 0;
+  const cur = new Date(start);
+  cur.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  while (cur < today) {
+    cur.setDate(cur.getDate() + 1);
+    const day = cur.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
+function calculateAutoStatus(orderDate) {
+  if (!orderDate) return 'confirmed';
+  const days = getBusinessDaysElapsed(orderDate);
+  if (days < 3) return 'confirmed';
+  if (days < 13) return 'processing';
+  if (days < 23) return 'shipped';
+  if (days < 33) return 'transit';
+  if (days < 48) return 'customs';
+  if (days < 60) return 'approach';
+  return 'delivered';
+}
+
 function getTruckPosition(status, route) {
   // Mapping status -> index dans route
   const statusToIndex = {
@@ -550,7 +577,14 @@ async function loadOrder(trackingId) {
 
 async function renderOrder(order) {
   const t = translations[currentLang];
-  const status = order.status || 'confirmed';
+  
+  // Auto-calcul du statut si auto_status est true ou non défini
+  let status;
+  if (order.auto_status === false) {
+    status = order.status || 'confirmed';
+  } else {
+    status = calculateAutoStatus(order.order_date || order.created_at);
+  }
   
   // Géocodage de la ville client
   const clientCoords = await geocodeCity(order.city, order.country);

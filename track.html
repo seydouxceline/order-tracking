@@ -552,17 +552,28 @@ function getTruckPosition(status, route) {
 }
 
 // ===== AFFICHAGE COMMANDE =====
-async function loadOrder(trackingId) {
+async function loadOrder(searchValue) {
   const t = translations[currentLang];
   const container = document.getElementById('result-container');
   container.innerHTML = `<div class="loading">${t.loading}</div>`;
   
   try {
-    const { data, error } = await sb
+    // On cherche d'abord par tracking_id, sinon par order_number
+    let { data, error } = await sb
       .from('orders')
       .select('*')
-      .eq('tracking_id', trackingId)
-      .single();
+      .eq('tracking_id', searchValue)
+      .maybeSingle();
+    
+    if (!data) {
+      const result = await sb
+        .from('orders')
+        .select('*')
+        .eq('order_number', searchValue)
+        .maybeSingle();
+      data = result.data;
+      error = result.error;
+    }
     
     if (error || !data) {
       container.innerHTML = `<div class="error-msg">${t.notFound}</div>`;

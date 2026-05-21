@@ -12,27 +12,32 @@ body {
   min-height: 100vh; display: flex; flex-direction: column;
   background: #f8f7f4;
 }
-
 .header {
   background: #fff; border-bottom: 1px solid #efefef;
   padding: 0 24px; height: 60px;
   display: flex; align-items: center; justify-content: space-between;
 }
 .brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+.lang-switcher { display: flex; gap: 6px; }
+.lang-btn {
+  background: none; border: 1px solid transparent; cursor: pointer;
+  font-size: 18px; padding: 4px 8px; border-radius: 6px;
+  opacity: 0.4; transition: opacity 0.2s;
+}
+.lang-btn.active { opacity: 1; border-color: #e5e5e5; }
+.lang-btn:hover { opacity: 0.8; }
 
 .hero {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 40px 20px;
 }
 .hero-inner { max-width: 480px; width: 100%; text-align: center; }
-
 .hero-icon { font-size: 48px; margin-bottom: 24px; }
 .hero-title {
   font-family: 'Playfair Display', serif; font-size: 32px;
   font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px;
 }
 .hero-sub { font-size: 15px; color: #888; margin-bottom: 36px; line-height: 1.6; }
-
 .search-wrap {
   background: #fff; border: 1px solid #efefef; border-radius: 14px;
   padding: 28px; box-shadow: 0 2px 20px rgba(0,0,0,0.04);
@@ -51,9 +56,7 @@ body {
   transition: background 0.2s; white-space: nowrap;
 }
 .btn:hover { background: #333; }
-
 .hint { font-size: 12px; color: #bbb; margin-top: 12px; }
-
 .footer {
   text-align: center; padding: 24px;
   font-size: 12px; color: #ccc;
@@ -61,35 +64,91 @@ body {
 </style>
 </head>
 <body>
-
 <div class="header">
-  <span class="brand">Suivi de livraison</span>
+  <span class="brand" id="brand">Suivi de livraison</span>
+  <div class="lang-switcher">
+    <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
+    <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+  </div>
 </div>
-
 <div class="hero">
   <div class="hero-inner">
     <div class="hero-icon">📦</div>
-    <h1 class="hero-title">Où est mon colis ?</h1>
-    <p class="hero-sub">Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.</p>
-
+    <h1 class="hero-title" id="hero-title">Où est mon colis ?</h1>
+    <p class="hero-sub" id="hero-sub">Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.</p>
     <div class="search-wrap">
       <div class="search-row">
-        <input type="text" id="trackInput" placeholder="ex: TRK-2026-00001" onkeydown="if(event.key==='Enter')search()">
-        <button class="btn" onclick="search()">Suivre</button>
+        <input type="text" id="trackInput" placeholder="ex: BL135653985861DE" onkeydown="if(event.key==='Enter')search()">
+        <button class="btn" id="btn-search" onclick="search()">Suivre</button>
       </div>
-      <div class="hint">Votre numéro de suivi se trouve dans l'email de confirmation de commande.</div>
+      <div class="hint" id="hint">Votre numéro de suivi se trouve dans l'email de confirmation de commande.</div>
     </div>
   </div>
 </div>
-
 <div class="footer">trackyourorder.co</div>
 
 <script>
+const translations = {
+  fr: {
+    title: "Suivi de livraison",
+    brand: "Suivi de livraison",
+    heroTitle: "Où est mon colis ?",
+    heroSub: "Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.",
+    placeholder: "ex: BL135653985861DE",
+    btnSearch: "Suivre",
+    hint: "Votre numéro de suivi se trouve dans l'email de confirmation de commande."
+  },
+  de: {
+    title: "Sendungsverfolgung",
+    brand: "Sendungsverfolgung",
+    heroTitle: "Wo ist mein Paket?",
+    heroSub: "Gib deine Sendungsnummer ein, die du per E-Mail erhalten hast, um deine Bestellung in Echtzeit zu verfolgen.",
+    placeholder: "z.B.: BL135653985861DE",
+    btnSearch: "Verfolgen",
+    hint: "Deine Sendungsnummer findest du in der Bestellbestätigungs-E-Mail."
+  }
+};
+
+function detectLang() {
+  const stored = localStorage.getItem('trackLang');
+  if (stored && translations[stored]) return stored;
+  const browser = (navigator.language || 'fr').toLowerCase();
+  return browser.startsWith('de') ? 'de' : 'fr';
+}
+
+let currentLang = detectLang();
+
+function applyLang() {
+  const t = translations[currentLang];
+  document.documentElement.lang = currentLang;
+  document.title = t.title;
+  document.getElementById('brand').textContent = t.brand;
+  document.getElementById('hero-title').textContent = t.heroTitle;
+  document.getElementById('hero-sub').textContent = t.heroSub;
+  document.getElementById('trackInput').placeholder = t.placeholder;
+  document.getElementById('btn-search').textContent = t.btnSearch;
+  document.getElementById('hint').textContent = t.hint;
+  
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.lang;
+    localStorage.setItem('trackLang', currentLang);
+    applyLang();
+  });
+});
+
 function search() {
   const val = document.getElementById('trackInput').value.trim();
   if (!val) return;
   window.location.href = '/track.html?order=' + encodeURIComponent(val);
 }
+
+applyLang();
 </script>
 </body>
 </html>

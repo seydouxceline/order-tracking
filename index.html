@@ -3,152 +3,402 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suivi de livraison</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<title>TrackYourOrder — Suivi de commande</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: 'DM Sans', sans-serif; color: #111;
-  min-height: 100vh; display: flex; flex-direction: column;
-  background: #f8f7f4;
-}
-.header {
-  background: #fff; border-bottom: 1px solid #efefef;
-  padding: 0 24px; height: 60px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
-.lang-switcher { display: flex; gap: 6px; }
-.lang-btn {
-  background: none; border: 1px solid transparent; cursor: pointer;
-  font-size: 18px; padding: 4px 8px; border-radius: 6px;
-  opacity: 0.4; transition: opacity 0.2s;
-}
-.lang-btn.active { opacity: 1; border-color: #e5e5e5; }
-.lang-btn:hover { opacity: 0.8; }
+  :root{
+    --ink:#0a0a0a;
+    --ink-soft:#1c1c1c;
+    --paper:#ffffff;
+    --ash:#f6f6f4;
+    --line:#e6e6e2;
+    --line-soft:#efefec;
+    --mute:#717171;
+    --mute-2:#9a9a9a;
+    --radius:14px;
+    --radius-sm:10px;
+    --display:'Schibsted Grotesk',sans-serif;
+    --body:'Manrope',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  ::selection{background:var(--ink);color:var(--paper)}
 
-.hero {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 40px 20px;
-}
-.hero-inner { max-width: 480px; width: 100%; text-align: center; }
-.hero-icon { font-size: 48px; margin-bottom: 24px; }
-.hero-title {
-  font-family: 'Playfair Display', serif; font-size: 32px;
-  font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px;
-}
-.hero-sub { font-size: 15px; color: #888; margin-bottom: 36px; line-height: 1.6; }
-.search-wrap {
-  background: #fff; border: 1px solid #efefef; border-radius: 14px;
-  padding: 28px; box-shadow: 0 2px 20px rgba(0,0,0,0.04);
-}
-.search-row { display: flex; gap: 10px; }
-.search-row input {
-  flex: 1; padding: 13px 16px; border: 1.5px solid #e0e0e0;
-  border-radius: 8px; font-size: 14px; font-family: inherit;
-  outline: none; transition: border-color 0.2s;
-}
-.search-row input:focus { border-color: #111; }
-.btn {
-  padding: 13px 24px; background: #111; color: #fff;
-  border: none; border-radius: 8px; font-size: 14px;
-  font-family: inherit; cursor: pointer; font-weight: 500;
-  transition: background 0.2s; white-space: nowrap;
-}
-.btn:hover { background: #333; }
-.hint { font-size: 12px; color: #bbb; margin-top: 12px; }
-.footer {
-  text-align: center; padding: 24px;
-  font-size: 12px; color: #ccc;
-}
+  /* ---------- NAV ---------- */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.82);
+    backdrop-filter:saturate(180%) blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1080px;margin:0 auto;padding:16px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+  .logo svg{display:block}
+  .logo .wm{
+    font-family:var(--display);font-weight:700;font-size:19px;
+    letter-spacing:-.02em;line-height:1;
+  }
+  .logo .wm b{font-weight:800}
+  .nav-tag{
+    font-size:12.5px;color:var(--mute);letter-spacing:.04em;
+    text-transform:uppercase;font-weight:600;
+  }
+  @media(max-width:600px){.nav-tag{display:none}}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;overflow:hidden;
+    max-width:1080px;margin:0 auto;padding:72px 24px 56px;
+    text-align:center;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mute);
+    border:1px solid var(--line);border-radius:100px;
+    padding:7px 15px;background:var(--paper);
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(38px,7vw,68px);line-height:1.02;
+    letter-spacing:-.035em;margin:26px 0 0;
+  }
+  .lead{
+    font-size:clamp(16px,2.3vw,19px);color:var(--mute);
+    max-width:540px;margin:20px auto 0;line-height:1.55;
+  }
+
+  /* ---------- SEARCH ---------- */
+  .search{
+    max-width:560px;margin:40px auto 0;text-align:left;
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:var(--radius);padding:10px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04),0 12px 36px -18px rgba(0,0,0,.22);
+  }
+  .search-row{display:flex;gap:10px}
+  .search input{
+    flex:1;min-width:0;font-family:var(--body);font-size:16px;
+    color:var(--ink);background:var(--ash);
+    border:1px solid transparent;border-radius:var(--radius-sm);
+    padding:16px 16px;outline:none;transition:.18s;
+  }
+  .search input::placeholder{color:var(--mute-2)}
+  .search input:focus{background:var(--paper);border-color:var(--ink)}
+  .btn{
+    flex-shrink:0;font-family:var(--display);font-weight:700;font-size:15px;
+    color:var(--paper);background:var(--ink);border:none;cursor:pointer;
+    border-radius:var(--radius-sm);padding:0 24px;white-space:nowrap;
+    transition:.18s;letter-spacing:-.01em;
+    display:inline-flex;align-items:center;gap:9px;
+  }
+  .btn:hover{background:var(--ink-soft);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn svg{transition:transform .2s}
+  .btn:hover svg{transform:translateX(3px)}
+  .hint{
+    display:flex;align-items:center;gap:8px;
+    font-size:13.5px;color:var(--mute);padding:12px 8px 4px;
+  }
+  .hint svg{flex-shrink:0;color:var(--mute-2)}
+  .err{
+    display:none;color:var(--ink);font-weight:600;font-size:13.5px;
+    padding:10px 8px 2px;
+  }
+
+  /* decorative dotted route */
+  .route{
+    position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);
+    width:280px;max-width:60%;pointer-events:none;opacity:.5;
+  }
+
+  /* ---------- TRUST STRIP ---------- */
+  .trust{
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:var(--ash);
+  }
+  .trust-inner{
+    max-width:1080px;margin:0 auto;padding:26px 24px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  }
+  .trust-item{display:flex;align-items:center;gap:13px;justify-content:center}
+  .trust-item .ic{
+    width:38px;height:38px;flex-shrink:0;border:1px solid var(--line);
+    border-radius:10px;background:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .trust-item b{font-family:var(--display);font-weight:700;font-size:15px;display:block;letter-spacing:-.01em}
+  .trust-item span{font-size:13px;color:var(--mute);display:block}
+  @media(max-width:720px){
+    .trust-inner{grid-template-columns:1fr;gap:16px}
+    .trust-item{justify-content:flex-start}
+  }
+
+  /* ---------- STEPS ---------- */
+  .section{max-width:1080px;margin:0 auto;padding:72px 24px}
+  .sec-head{margin-bottom:40px}
+  .sec-head .eyebrow{margin-bottom:18px}
+  .sec-head h2{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(28px,4.5vw,40px);letter-spacing:-.03em;line-height:1.05;
+  }
+  .sec-head p{color:var(--mute);margin-top:12px;max-width:480px;font-size:16px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .step{
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px 24px;background:var(--paper);position:relative;
+    transition:.2s;
+  }
+  .step:hover{border-color:var(--ink);transform:translateY(-3px)}
+  .step .num{
+    font-family:var(--display);font-weight:700;font-size:13px;
+    color:var(--mute-2);letter-spacing:.06em;
+  }
+  .step h3{
+    font-family:var(--display);font-weight:700;font-size:18px;
+    letter-spacing:-.01em;margin:14px 0 8px;
+  }
+  .step p{font-size:14.5px;color:var(--mute);line-height:1.55}
+  @media(max-width:720px){.steps{grid-template-columns:1fr}}
+
+  /* ---------- FAQ ---------- */
+  .faq{border-top:1px solid var(--line);background:var(--ash)}
+  .faq-grid{max-width:780px;margin:0 auto;padding:72px 24px}
+  .faq-grid h2{
+    font-family:var(--display);font-weight:800;text-align:center;
+    font-size:clamp(28px,4.5vw,40px);letter-spacing:-.03em;margin-bottom:34px;
+  }
+  .qa{
+    border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--paper);margin-bottom:12px;overflow:hidden;
+  }
+  .qa button{
+    width:100%;text-align:left;background:none;border:none;cursor:pointer;
+    padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    font-family:var(--display);font-weight:600;font-size:16.5px;color:var(--ink);
+    letter-spacing:-.01em;
+  }
+  .qa .plus{
+    flex-shrink:0;width:22px;height:22px;position:relative;transition:.25s;
+  }
+  .qa .plus::before,.qa .plus::after{
+    content:"";position:absolute;background:var(--ink);border-radius:2px;
+    top:50%;left:50%;transform:translate(-50%,-50%);
+  }
+  .qa .plus::before{width:13px;height:1.8px}
+  .qa .plus::after{width:1.8px;height:13px;transition:.25s}
+  .qa.open .plus::after{transform:translate(-50%,-50%) rotate(90deg);opacity:0}
+  .qa .ans{
+    max-height:0;overflow:hidden;transition:max-height .3s ease;
+  }
+  .qa .ans p{padding:0 22px 22px;color:var(--mute);font-size:15px;line-height:1.6}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line)}
+  .foot-inner{
+    max-width:1080px;margin:0 auto;padding:34px 24px;
+    display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  }
+  .foot-inner .copy{font-size:13px;color:var(--mute)}
+  .foot-inner a.dom{font-size:13px;color:var(--mute);text-decoration:none}
+  .foot-inner a.dom:hover{color:var(--ink)}
+
+  /* ---------- ENTRANCE ---------- */
+  .reveal{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .d1{animation-delay:.05s}.d2{animation-delay:.13s}.d3{animation-delay:.21s}
+  .d4{animation-delay:.29s}.d5{animation-delay:.37s}
+  @media(prefers-reduced-motion:reduce){.reveal{animation:none;opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<div class="header">
-  <span class="brand" id="brand">Suivi de livraison</span>
-  <div class="lang-switcher">
-    <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
-    <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
-  </div>
-</div>
-<div class="hero">
-  <div class="hero-inner">
-    <div class="hero-icon">📦</div>
-    <h1 class="hero-title" id="hero-title">Où est mon colis ?</h1>
-    <p class="hero-sub" id="hero-sub">Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.</p>
-    <div class="search-wrap">
-      <div class="search-row">
-        <input type="text" id="trackInput" placeholder="ex: BL135653985861DE" onkeydown="if(event.key==='Enter')search()">
-        <button class="btn" id="btn-search" onclick="search()">Suivre</button>
-      </div>
-      <div class="hint" id="hint">Votre numéro de suivi se trouve dans l'email de confirmation de commande.</div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo" aria-label="TrackYourOrder accueil">
+        <svg width="22" height="28" viewBox="0 0 24 30" fill="none" aria-hidden="true">
+          <path d="M12 2C8.4 2 5.5 4.9 5.5 8.5c0 4.9 6.5 12 6.5 12s6.5-7.1 6.5-12C18.5 4.9 15.6 2 12 2z" fill="#0a0a0a"/>
+          <circle cx="12" cy="8.5" r="2.4" fill="#ffffff"/>
+          <circle cx="6" cy="26" r="1.5" fill="#0a0a0a"/>
+          <circle cx="12" cy="26" r="1.5" fill="#0a0a0a"/>
+          <circle cx="18" cy="26" r="1.5" fill="#0a0a0a"/>
+        </svg>
+        <span class="wm">TrackYour<b>Order</b></span>
+      </a>
+      <span class="nav-tag">Suivi de commande</span>
     </div>
-  </div>
-</div>
-<div class="footer">trackyourorder.co</div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="eyebrow reveal d1"><span class="dot"></span>Espace de suivi</span>
+    <h1 class="reveal d2">Où est mon colis&nbsp;?</h1>
+    <p class="lead reveal d3">Entrez votre numéro pour visualiser l'avancement de votre livraison, étape par étape.</p>
+
+    <div class="search reveal d4">
+      <div class="search-row">
+        <input id="q" type="text" inputmode="text" autocomplete="off"
+               placeholder="Numéro de suivi ou de commande"
+               aria-label="Numéro de suivi ou de commande">
+        <button class="btn" id="go">
+          Suivre ma commande
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <p class="err" id="err">Veuillez saisir votre numéro de suivi ou de commande.</p>
+      <p class="hint">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Vous trouverez ce numéro dans l'e-mail de confirmation de votre commande.
+      </p>
+    </div>
+
+    <svg class="route" viewBox="0 0 280 30" fill="none" aria-hidden="true">
+      <line x1="8" y1="15" x2="240" y2="15" stroke="#0a0a0a" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <circle cx="8" cy="15" r="4" fill="#0a0a0a"/>
+      <path d="M256 4c-3.6 0-6.5 2.9-6.5 6.5 0 4.9 6.5 12 6.5 12s6.5-7.1 6.5-12C262.5 6.9 259.6 4 256 4z" fill="#0a0a0a"/>
+      <circle cx="256" cy="10.5" r="2.2" fill="#fff"/>
+    </svg>
+  </header>
+
+  <!-- TRUST -->
+  <section class="trust">
+    <div class="trust-inner">
+      <div class="trust-item reveal d1">
+        <div class="ic">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="#0a0a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><b>Accessible 24h/24</b><span>Consultable à tout moment</span></div>
+      </div>
+      <div class="trust-item reveal d2">
+        <div class="ic">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2 6 4-14 2 8h6" stroke="#0a0a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><b>Suivi en temps réel</b><span>Étape par étape</span></div>
+      </div>
+      <div class="trust-item reveal d3">
+        <div class="ic">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 8.3-7 9.5C8 22.3 5 18.4 5 14V6l7-3z" stroke="#0a0a0a" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#0a0a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><b>Connexion sécurisée</b><span>Vos données protégées</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEPS -->
+  <section class="section">
+    <div class="sec-head">
+      <span class="eyebrow"><span class="dot"></span>Simple et rapide</span>
+      <h2>Suivez en trois étapes</h2>
+      <p>Pas besoin de créer de compte. Votre numéro suffit pour tout consulter.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="num">01</span>
+        <h3>Récupérez votre numéro</h3>
+        <p>Votre numéro de suivi ou de commande figure dans l'e-mail de confirmation reçu après l'achat.</p>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <h3>Lancez la recherche</h3>
+        <p>Saisissez-le dans le champ ci-dessus. Un seul numéro suffit, aucun autre détail n'est requis.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3>Suivez l'avancement</h3>
+        <p>Visualisez chaque étape de la préparation jusqu'à la livraison, sur une timeline claire.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="faq-grid">
+      <h2>Questions fréquentes</h2>
+
+      <div class="qa">
+        <button type="button" aria-expanded="false">Pourquoi le suivi est-il estimatif&nbsp;?<span class="plus" aria-hidden="true"></span></button>
+        <div class="ans"><p>Le suivi affiché repose sur les étapes habituelles de traitement d'une commande et peut évoluer selon le transporteur en charge de l'acheminement.</p></div>
+      </div>
+
+      <div class="qa">
+        <button type="button" aria-expanded="false">Où trouver mon numéro&nbsp;?<span class="plus" aria-hidden="true"></span></button>
+        <div class="ans"><p>Votre numéro de commande ou de suivi se trouve dans l'e-mail de confirmation reçu juste après votre achat. Les deux fonctionnent pour la recherche.</p></div>
+      </div>
+
+      <div class="qa">
+        <button type="button" aria-expanded="false">Quand le suivi officiel arrive-t-il&nbsp;?<span class="plus" aria-hidden="true"></span></button>
+        <div class="ans"><p>Le lien officiel du transporteur est envoyé dès que le colis est scanné dans son réseau logistique.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="foot-inner">
+      <a href="/" class="logo" aria-label="TrackYourOrder">
+        <svg width="18" height="23" viewBox="0 0 24 30" fill="none" aria-hidden="true">
+          <path d="M12 2C8.4 2 5.5 4.9 5.5 8.5c0 4.9 6.5 12 6.5 12s6.5-7.1 6.5-12C18.5 4.9 15.6 2 12 2z" fill="#0a0a0a"/>
+          <circle cx="12" cy="8.5" r="2.4" fill="#ffffff"/>
+          <circle cx="6" cy="26" r="1.5" fill="#0a0a0a"/><circle cx="12" cy="26" r="1.5" fill="#0a0a0a"/><circle cx="18" cy="26" r="1.5" fill="#0a0a0a"/>
+        </svg>
+        <span class="wm" style="font-size:16px">TrackYour<b>Order</b></span>
+      </a>
+      <span class="copy">© 2026 TrackYourOrder. Tous droits réservés.</span>
+      <a class="dom" href="https://www.trackyourorder.co">trackyourorder.co</a>
+    </div>
+  </footer>
 
 <script>
-const translations = {
-  fr: {
-    title: "Suivi de livraison",
-    brand: "Suivi de livraison",
-    heroTitle: "Où est mon colis ?",
-    heroSub: "Entrez votre numéro de suivi reçu par email pour suivre votre commande en temps réel.",
-    placeholder: "ex: BL135653985861DE",
-    btnSearch: "Suivre",
-    hint: "Votre numéro de suivi se trouve dans l'email de confirmation de commande."
-  },
-  de: {
-    title: "Sendungsverfolgung",
-    brand: "Sendungsverfolgung",
-    heroTitle: "Wo ist mein Paket?",
-    heroSub: "Gib deine Sendungsnummer ein, die du per E-Mail erhalten hast, um deine Bestellung in Echtzeit zu verfolgen.",
-    placeholder: "z.B.: BL135653985861DE",
-    btnSearch: "Verfolgen",
-    hint: "Deine Sendungsnummer findest du in der Bestellbestätigungs-E-Mail."
-  }
-};
+  (function(){
+    var input = document.getElementById('q');
+    var err = document.getElementById('err');
+    function go(){
+      var v = (input.value || '').trim();
+      if(!v){ err.style.display='block'; input.focus(); return; }
+      err.style.display='none';
+      window.location.href = 'track.html?order=' + encodeURIComponent(v);
+    }
+    document.getElementById('go').addEventListener('click', go);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter') go(); });
+    input.addEventListener('input', function(){ if(input.value.trim()) err.style.display='none'; });
 
-function detectLang() {
-  const stored = localStorage.getItem('trackLang');
-  if (stored && translations[stored]) return stored;
-  const browser = (navigator.language || 'fr').toLowerCase();
-  return browser.startsWith('de') ? 'de' : 'fr';
-}
-
-let currentLang = detectLang();
-
-function applyLang() {
-  const t = translations[currentLang];
-  document.documentElement.lang = currentLang;
-  document.title = t.title;
-  document.getElementById('brand').textContent = t.brand;
-  document.getElementById('hero-title').textContent = t.heroTitle;
-  document.getElementById('hero-sub').textContent = t.heroSub;
-  document.getElementById('trackInput').placeholder = t.placeholder;
-  document.getElementById('btn-search').textContent = t.btnSearch;
-  document.getElementById('hint').textContent = t.hint;
-  
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === currentLang);
-  });
-}
-
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentLang = btn.dataset.lang;
-    localStorage.setItem('trackLang', currentLang);
-    applyLang();
-  });
-});
-
-function search() {
-  const val = document.getElementById('trackInput').value.trim();
-  if (!val) return;
-  window.location.href = '/track.html?order=' + encodeURIComponent(val);
-}
-
-applyLang();
+    var items = document.querySelectorAll('.qa');
+    items.forEach(function(qa){
+      var btn = qa.querySelector('button');
+      var ans = qa.querySelector('.ans');
+      btn.addEventListener('click', function(){
+        var isOpen = qa.classList.contains('open');
+        items.forEach(function(o){
+          o.classList.remove('open');
+          o.querySelector('.ans').style.maxHeight = null;
+          o.querySelector('button').setAttribute('aria-expanded','false');
+        });
+        if(!isOpen){
+          qa.classList.add('open');
+          ans.style.maxHeight = ans.scrollHeight + 'px';
+          btn.setAttribute('aria-expanded','true');
+        }
+      });
+    });
+  })();
 </script>
 </body>
 </html>

@@ -218,6 +218,7 @@ tbody tr:hover td { background: #fafafa; }
             <input type="date" id="filterDateTo" onchange="filterOrders()" style="padding:6px 8px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
           </label>
           <button class="btn btn-outline btn-sm" onclick="resetFilters()" style="margin-left:auto;">↺ Réinitialiser</button>
+          <button class="btn btn-sm" onclick="exportCSV()">📥 Export CSV</button>
         </div>
         <div id="filterCount" style="font-size:12px;color:#888;margin-bottom:10px;"></div>
         <div id="ordersTable"><div style="color:#888;font-size:14px;">Chargement...</div></div>
@@ -250,10 +251,12 @@ tbody tr:hover td { background: #fafafa; }
   </div>
 </div>
 
+<script src="shared.js"></script>
 <script>
 const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
-const ADMIN_PASSWORD = 'Roadto10M';
+// Hash SHA-256 du mot de passe admin (pas visible en clair)
+const ADMIN_HASH = '96ea5911f7a9bcbf072434aef3bbe7eee218908bfef6f058fb918d38c1be328b';
 
 const STATUSES = [
   { value: 'confirmed',  label: '✓ Commande confirmée' },
@@ -273,34 +276,10 @@ const REFUND_STATUSES = [
 
 let allOrders = [];
 let allRefunds = [];
+const PAGE_SIZE = 50;
+let currentPage = 1;
 
-// === Auto-statut basé sur jours ouvrés ===
-function getBusinessDaysElapsed(orderDate) {
-  const start = new Date(orderDate);
-  const today = new Date();
-  let count = 0;
-  const cur = new Date(start);
-  cur.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  while (cur < today) {
-    cur.setDate(cur.getDate() + 1);
-    const day = cur.getDay();
-    if (day !== 0 && day !== 6) count++;
-  }
-  return count;
-}
-
-function calculateAutoStatus(orderDate) {
-  if (!orderDate) return 'confirmed';
-  const days = getBusinessDaysElapsed(orderDate);
-  if (days < 3) return 'confirmed';
-  if (days < 13) return 'processing';
-  if (days < 23) return 'shipped';
-  if (days < 33) return 'transit';
-  if (days < 48) return 'customs';
-  if (days < 60) return 'approach';
-  return 'delivered';
-}
+// Auto-statut loaded from shared.js
 
 function getDisplayStatus(order) {
   // Si auto_status === false -> on prend le statut en base
@@ -309,14 +288,18 @@ function getDisplayStatus(order) {
   return calculateAutoStatus(order.order_date || order.created_at);
 }
 
-function checkLogin() {
+async function hashPassword(pw) {
+  const data = new TextEncoder().encode(pw);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkLogin() {
   const pw = document.getElementById('pwInput').value;
-  if (pw === ADMIN_PASSWORD) {
+  const hash = await hashPassword(pw);
+  if (hash === ADMIN_HASH) {
     sessionStorage.setItem('admin_auth', '1');
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('adminPage').style.display = 'block';
-    generateTrackingId();
-    loadOrders();
+    showAdmin();
   } else {
     document.getElementById('loginErr').textContent = 'Mot de passe incorrect.';
   }
@@ -327,13 +310,15 @@ function logout() {
   location.reload();
 }
 
+function showAdmin() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('adminPage').style.display = 'block';
+  generateTrackingId();
+  loadOrders();
+}
+
 window.onload = () => {
-  if (sessionStorage.getItem('admin_auth') === '1') {
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('adminPage').style.display = 'block';
-    generateTrackingId();
-    loadOrders();
-  }
+  if (sessionStorage.getItem('admin_auth') === '1') showAdmin();
 };
 
 function switchTab(tab) {
@@ -344,8 +329,7 @@ function switchTab(tab) {
 }
 
 function generateTrackingId() {
-  const num = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
-  document.getElementById('trackingId').value = `TRK-2026-${num}`;
+  document.getElementById('trackingId').value = generateUniqueTrackingId();
 }
 
 async function createOrder() {
@@ -359,24 +343,32 @@ async function createOrder() {
   if (!order_number || !customer_name) {
     msg.className = 'msg error'; msg.textContent = 'Numéro de commande et nom client requis.'; return;
   }
+  if (!tracking_id) {
+    msg.className = 'msg error'; msg.textContent = 'Erreur : tracking ID non généré. Rechargez la page.'; return;
+  }
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
-    method: 'POST',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed', auto_status: true, order_date: new Date().toISOString() })
-  });
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed', auto_status: true, order_date: new Date().toISOString() })
+    });
 
-  if (res.ok) {
-    msg.className = 'msg success';
-    msg.textContent = `✓ Commande créée — lien : ${window.location.origin}/track.html?order=${tracking_id}`;
-    document.getElementById('orderNum').value = '';
-    document.getElementById('custName').value = '';
-    document.getElementById('custEmail').value = '';
-    document.getElementById('prodName').value = '';
-    generateTrackingId();
-    loadOrders();
-  } else {
-    msg.className = 'msg error'; msg.textContent = 'Erreur lors de la création.';
+    if (res.ok) {
+      msg.className = 'msg success';
+      msg.textContent = `✓ Commande créée — lien : ${window.location.origin}/track?order=${tracking_id}`;
+      document.getElementById('orderNum').value = '';
+      document.getElementById('custName').value = '';
+      document.getElementById('custEmail').value = '';
+      document.getElementById('prodName').value = '';
+      generateTrackingId();
+      loadOrders();
+    } else {
+      const err = await res.text();
+      msg.className = 'msg error'; msg.textContent = `Erreur (${res.status}) : ${err}`;
+    }
+  } catch (e) {
+    msg.className = 'msg error'; msg.textContent = `Erreur réseau : ${e.message}`;
   }
 }
 
@@ -445,12 +437,33 @@ function filterOrders() {
     return true;
   });
   
-  document.getElementById('filterCount').textContent = 
-    filtered.length === allOrders.length 
-      ? `${allOrders.length} commande${allOrders.length > 1 ? 's' : ''}` 
+  const totalFiltered = filtered.length;
+  const totalPages = Math.ceil(totalFiltered / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = 1;
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  document.getElementById('filterCount').textContent =
+    filtered.length === allOrders.length
+      ? `${allOrders.length} commande${allOrders.length > 1 ? 's' : ''}`
       : `${filtered.length} sur ${allOrders.length} commande${allOrders.length > 1 ? 's' : ''}`;
-  
-  renderTable(filtered);
+
+  renderTable(paginated);
+
+  // Pagination controls
+  let pagHTML = '';
+  if (totalPages > 1) {
+    pagHTML = '<div style="display:flex;gap:6px;justify-content:center;margin-top:16px;align-items:center;">';
+    pagHTML += `<button class="btn btn-outline btn-sm" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>←</button>`;
+    pagHTML += `<span style="font-size:13px;color:#666;">Page ${currentPage} / ${totalPages}</span>`;
+    pagHTML += `<button class="btn btn-outline btn-sm" onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>→</button>`;
+    pagHTML += '</div>';
+  }
+  document.getElementById('ordersTable').insertAdjacentHTML('beforeend', pagHTML);
+}
+
+function goPage(p) {
+  currentPage = p;
+  filterOrders();
 }
 
 function resetFilters() {
@@ -517,12 +530,13 @@ function renderTable(orders) {
         ${resetBtn}
       </td>
       <td><button class="btn btn-outline btn-sm" onclick="copyLink('${o.tracking_id}')">Copier</button></td>
+      <td><button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fca5a5;" onclick="deleteOrder('${o.id}','${o.order_number}')">✕</button></td>
     </tr>`;
   }).join('');
   document.getElementById('ordersTable').innerHTML = `
     <table>
       <thead><tr>
-        <th>Commande</th><th>Date</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Store</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th>
+        <th>Commande</th><th>Date</th><th>Tracking ID</th><th>Client</th><th>Produit</th><th>Store</th><th>Statut</th><th>Modifier</th><th>Lien</th><th></th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -551,6 +565,44 @@ async function resetToAuto(id) {
 function copyLink(tracking_id) {
   navigator.clipboard.writeText(`${window.location.origin}/track.html?order=${tracking_id}`);
   alert('Lien copié !');
+}
+
+async function deleteOrder(id, orderNum) {
+  if (!confirm(`Supprimer la commande #${orderNum} ? Cette action est irréversible.`)) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  loadOrders();
+}
+
+function exportCSV() {
+  const orders = allOrders;
+  if (!orders.length) { alert('Aucune commande à exporter.'); return; }
+  const header = ['Commande','Date','Tracking ID','Client','Email','Produit','Store','Statut','Mode','J+ ouvrés'];
+  const rows = orders.map(o => {
+    const status = getDisplayStatus(o);
+    const od = o.order_date || o.created_at;
+    const days = od ? getBusinessDaysElapsed(od) : 0;
+    return [
+      o.order_number || '',
+      od ? new Date(od).toLocaleDateString('fr-FR') : '',
+      o.tracking_id || '',
+      o.customer_name || '',
+      o.customer_email || '',
+      o.product_name || '',
+      o.store_name || '',
+      status,
+      o.auto_status === false ? 'Manuel' : 'Auto',
+      days
+    ];
+  });
+  const csv = [header, ...rows].map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'commandes_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
 }
 
 // ===== REMBOURSEMENTS =====

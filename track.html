@@ -366,6 +366,7 @@ body {
   <div id="result-container"></div>
 </div>
 
+<script src="shared.js"></script>
 <script>
 const SUPABASE_URL = "https://fzmhrsjebncjuifzarqh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs";
@@ -399,6 +400,13 @@ function applyStore() {
   } else {
     logoEl.style.display = 'none';
   }
+}
+
+const DEFAULT_SUPPORT_EMAIL = 'trackyourorder4@gmail.com';
+
+function getSupportEmail() {
+  const store = getStoreConfig();
+  return store && store.supportEmail ? store.supportEmail : DEFAULT_SUPPORT_EMAIL;
 }
 
 // ===== TRADUCTIONS =====
@@ -644,32 +652,7 @@ function getRoute(country, clientCity, clientCoords) {
 }
 
 // ===== POSITION DU CAMION SELON STATUT =====
-function getBusinessDaysElapsed(orderDate) {
-  const start = new Date(orderDate);
-  const today = new Date();
-  let count = 0;
-  const cur = new Date(start);
-  cur.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  while (cur < today) {
-    cur.setDate(cur.getDate() + 1);
-    const day = cur.getDay();
-    if (day !== 0 && day !== 6) count++;
-  }
-  return count;
-}
-
-function calculateAutoStatus(orderDate) {
-  if (!orderDate) return 'confirmed';
-  const days = getBusinessDaysElapsed(orderDate);
-  if (days < 3) return 'confirmed';
-  if (days < 13) return 'processing';
-  if (days < 23) return 'shipped';
-  if (days < 33) return 'transit';
-  if (days < 48) return 'customs';
-  if (days < 60) return 'approach';
-  return 'delivered';
-}
+// getBusinessDaysElapsed & calculateAutoStatus loaded from shared.js
 
 function getTruckPosition(status, route) {
   // Mapping status -> index dans route
@@ -832,10 +815,6 @@ async function renderOrder(order) {
             <div class="sidebar-label">${t.stepsLabel}</div>
             <ul class="timeline">${timelineHTML}</ul>
           </div>
-          <div class="support-section">
-            <div class="support-text">${t.questionLabel}</div>
-            <a href="mailto:${getStoreConfig()?.supportEmail || 'support@trackyourorder.co'}" class="support-link">${t.contactSupport}</a>
-          </div>
         </div>
       </div>
       
@@ -856,8 +835,13 @@ async function renderOrder(order) {
         </div>
       `).join('')}
     </div>
+
+    <div class="support-section">
+      <p class="support-text">${t.questionLabel}</p>
+      <a class="support-link" href="mailto:${getSupportEmail()}">${t.contactSupport}</a>
+    </div>
   `;
-  
+
   // Initialiser carte
   initMap(route, truckIdx, status);
 }

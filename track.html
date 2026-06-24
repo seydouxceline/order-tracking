@@ -88,6 +88,11 @@ body {
   gap: 12px;
   max-width: 500px;
   margin: 0 auto;
+  flex-wrap: wrap;
+}
+@media (max-width: 480px) {
+  .search-form { flex-direction: column; }
+  .search-btn { width: 100%; }
 }
 .search-input {
   flex: 1;

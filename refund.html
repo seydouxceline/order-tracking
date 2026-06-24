@@ -27,6 +27,23 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 .lang-btn.active { opacity: 1; border-color: #e5e5e5; }
 .lang-btn:hover { opacity: 0.8; }
 
+/* Progress bar */
+.progress-wrap {
+  background: #fff; border-bottom: 1px solid #efefef;
+  padding: 16px 24px;
+}
+.progress-inner { max-width: 660px; margin: 0 auto; }
+.progress-steps { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.progress-step {
+  font-size: 11px; color: #ccc; font-weight: 500;
+  transition: color 0.3s;
+}
+.progress-step.active { color: #111; }
+.progress-step.done { color: #22c55e; }
+.progress-track { height: 3px; background: #e8e8e8; border-radius: 3px; position: relative; }
+.progress-fill { height: 100%; background: #111; border-radius: 3px; transition: width 0.4s ease; }
+.progress-label { font-size: 12px; color: #888; margin-top: 8px; text-align: center; }
+
 .container { max-width: 660px; margin: 0 auto; padding: 40px 20px 80px; }
 .page-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
 .page-sub { font-size: 14px; color: #888; margin-bottom: 36px; line-height: 1.6; }
@@ -57,7 +74,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f8f7f4; color: #111; min
 label { display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 5px; }
 label .req { color: #dc2626; margin-left: 2px; }
 
-input[type="text"], input[type="email"], input[type="date"],
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"],
 textarea, select {
   width: 100%; padding: 10px 14px;
   border: 1.5px solid #e8e8e8; border-radius: 8px;
@@ -72,6 +89,10 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
 }
+/* Hide number input spinner */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
 
 .radio-group { display: flex; flex-direction: column; gap: 7px; }
 .radio-group.horizontal { flex-direction: row; flex-wrap: wrap; }
@@ -101,6 +122,33 @@ input[type="range"] {
 }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #111; cursor: pointer; }
 .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-top: 5px; }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed #e0e0e0; border-radius: 10px;
+  padding: 24px; text-align: center; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-zone:hover { border-color: #bbb; background: #fafafa; }
+.upload-zone.dragover { border-color: #111; background: #f5f5f5; }
+.upload-icon { font-size: 28px; margin-bottom: 6px; }
+.upload-text { font-size: 13px; color: #888; }
+.upload-text span { color: #111; font-weight: 600; text-decoration: underline; }
+.upload-hint { font-size: 11px; color: #bbb; margin-top: 4px; }
+.upload-previews { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.upload-thumb {
+  width: 72px; height: 72px; border-radius: 8px;
+  object-fit: cover; border: 1px solid #e8e8e8;
+  position: relative;
+}
+.upload-item { position: relative; display: inline-block; }
+.upload-remove {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #111; color: #fff; border: none;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .confirm-box {
   display: flex; align-items: flex-start; gap: 12px;
@@ -133,9 +181,12 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 .success-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
 .success-sub { font-size: 14px; color: #888; line-height: 1.7; }
 
+.hidden { display: none !important; }
+
 @media (max-width: 540px) {
   .field-row { grid-template-columns: 1fr; }
   .radio-group.horizontal { flex-direction: column; }
+  .progress-steps { font-size: 9px; }
 }
 </style>
 </head>
@@ -146,19 +197,27 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
   <div class="header-right">
     <span class="header-sub" id="header-sub">Demande de remboursement</span>
     <div class="lang-switcher">
-      <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
-      <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+      <button class="lang-btn" data-lang="fr" title="Francais">&#x1F1EB;&#x1F1F7;</button>
+      <button class="lang-btn" data-lang="de" title="Deutsch">&#x1F1E9;&#x1F1EA;</button>
     </div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <div class="progress-steps" id="progress-steps"></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label"></div>
   </div>
 </div>
 
 <div class="container">
   <div id="form-wrap">
     <div class="page-title" id="page-title">Votre demande</div>
-    <p class="page-sub" id="page-sub">Remplissez ce formulaire pour soumettre votre demande. Notre équipe vous répondra dans les plus brefs délais. Les champs <span style="color:#dc2626">*</span> sont obligatoires.</p>
+    <p class="page-sub" id="page-sub">Remplissez ce formulaire pour soumettre votre demande. Notre equipe vous repondra dans les plus brefs delais. Les champs <span style="color:#dc2626">*</span> sont obligatoires.</p>
 
     <!-- 1. Infos -->
-    <div class="section">
+    <div class="section" data-section="1">
       <div class="section-title" data-num="1" id="sect-1">Vos informations</div>
       <div class="field-row">
         <div class="field">
@@ -172,75 +231,99 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
       </div>
       <div class="field-row">
         <div class="field">
-          <label id="lbl-order">Numéro de commande</label>
-          <input type="text" id="f-order" placeholder="ex: 10042">
+          <label id="lbl-phone">Telephone <span class="req">*</span></label>
+          <input type="tel" id="f-phone" placeholder="+33 6 12 34 56 78">
         </div>
         <div class="field">
-          <label id="lbl-tracking">Numéro de suivi</label>
+          <label id="lbl-order">Numero de commande</label>
+          <input type="text" id="f-order" placeholder="ex: 10042">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label id="lbl-tracking">Numero de suivi</label>
           <input type="text" id="f-tracking" placeholder="TRK-2026-XXXXX">
+        </div>
+        <div class="field">
+          <label id="lbl-amount">Montant de la commande <span class="req">*</span></label>
+          <input type="number" id="f-amount" placeholder="49.90" step="0.01" min="0">
         </div>
       </div>
       <div class="field">
-        <label id="lbl-product">Produit concerné <span class="req">*</span></label>
-        <input type="text" id="f-product" placeholder="Nom du produit commandé">
+        <label id="lbl-product">Produit concerne <span class="req">*</span></label>
+        <input type="text" id="f-product" placeholder="Nom du produit commande">
+      </div>
+      <div class="field">
+        <label id="lbl-address">Adresse de livraison <span class="req">*</span></label>
+        <input type="text" id="f-address" placeholder="12 rue de la Paix, 75001 Paris">
       </div>
     </div>
 
-    <!-- 2. Problème -->
-    <div class="section">
-      <div class="section-title" data-num="2" id="sect-2">Nature du problème</div>
+    <!-- 2. Probleme -->
+    <div class="section" data-section="2">
+      <div class="section-title" data-num="2" id="sect-2">Nature du probleme</div>
       <div class="field">
         <label id="lbl-motif">Motif de la demande <span class="req">*</span></label>
         <div class="radio-group" id="rg-motif"></div>
       </div>
       <div class="field" style="margin-top:16px;">
-        <label id="lbl-desc">Description détaillée <span class="req">*</span></label>
+        <label id="lbl-desc">Description detaillee <span class="req">*</span></label>
         <textarea id="f-desc"></textarea>
       </div>
       <div class="field">
-        <label id="lbl-issue-date">Date du problème <span class="req">*</span></label>
+        <label id="lbl-issue-date">Date du probleme <span class="req">*</span></label>
         <input type="date" id="f-issue-date">
       </div>
       <div class="field">
-        <label id="lbl-contact">Avez-vous déjà contacté notre support ? <span class="req">*</span></label>
+        <label id="lbl-photos">Photos / preuves</label>
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">&#128247;</div>
+          <div class="upload-text" id="upload-text">Glissez vos photos ici ou <span>parcourir</span></div>
+          <div class="upload-hint" id="upload-hint">JPG, PNG — max 5 fichiers, 5 Mo chacun</div>
+          <input type="file" id="f-photos" accept="image/*" multiple style="display:none">
+        </div>
+        <div class="upload-previews" id="upload-previews"></div>
+      </div>
+      <div class="field">
+        <label id="lbl-contact">Avez-vous deja contacte notre support ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-contact"></div>
       </div>
     </div>
 
     <!-- 3. Solution -->
-    <div class="section">
-      <div class="section-title" data-num="3" id="sect-3">Solution souhaitée</div>
+    <div class="section" data-section="3">
+      <div class="section-title" data-num="3" id="sect-3">Solution souhaitee</div>
       <div class="field">
         <label id="lbl-solution">Que souhaitez-vous ? <span class="req">*</span></label>
         <div class="radio-group" id="rg-solution"></div>
       </div>
-      <div class="field" style="margin-top:16px;">
-        <label id="lbl-iban">IBAN (si remboursement bancaire) <span class="req">*</span></label>
+      <div class="field hidden" style="margin-top:16px;" id="iban-field">
+        <label id="lbl-iban">IBAN (pour le remboursement) <span class="req">*</span></label>
         <input type="text" id="f-iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX">
-        <div style="font-size:11px;color:#aaa;margin-top:4px;" id="iban-hint">Utilisé uniquement pour procéder au remboursement.</div>
+        <div style="font-size:11px;color:#aaa;margin-top:4px;" id="iban-hint">Utilise uniquement pour proceder au remboursement.</div>
       </div>
     </div>
 
     <!-- 4. Satisfaction -->
-    <div class="section">
+    <div class="section" data-section="4">
       <div class="section-title" data-num="4" id="sect-4">Votre satisfaction</div>
       <div class="field">
-        <label id="lbl-rating">Note globale de votre expérience <span class="req">*</span></label>
+        <label id="lbl-rating">Note globale de votre experience <span class="req">*</span></label>
         <div class="stars" id="stars">
-          <span class="star" data-v="1" onclick="setStar(1)">★</span>
-          <span class="star" data-v="2" onclick="setStar(2)">★</span>
-          <span class="star" data-v="3" onclick="setStar(3)">★</span>
-          <span class="star" data-v="4" onclick="setStar(4)">★</span>
-          <span class="star" data-v="5" onclick="setStar(5)">★</span>
+          <span class="star" data-v="1" onclick="setStar(1)">&#9733;</span>
+          <span class="star" data-v="2" onclick="setStar(2)">&#9733;</span>
+          <span class="star" data-v="3" onclick="setStar(3)">&#9733;</span>
+          <span class="star" data-v="4" onclick="setStar(4)">&#9733;</span>
+          <span class="star" data-v="5" onclick="setStar(5)">&#9733;</span>
         </div>
         <div class="star-label" id="star-label">Cliquez pour noter</div>
       </div>
       <div class="field">
-        <label id="lbl-delivery">La livraison a-t-elle correspondu à vos attentes ? <span class="req">*</span></label>
+        <label id="lbl-delivery">La livraison a-t-elle correspondu a vos attentes ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-delivery"></div>
       </div>
       <div class="field">
-        <label id="lbl-nps">Probabilité de nous recommander (0 → 10) <span class="req">*</span></label>
+        <label id="lbl-nps">Probabilite de nous recommander (0 &rarr; 10) <span class="req">*</span></label>
         <div class="range-wrap">
           <input type="range" min="0" max="10" value="5" id="f-nps" oninput="updateNPS(this)">
           <div class="range-labels"><span id="nps-min">0 — Pas du tout</span><span id="nps-val">5</span><span id="nps-max">10 — Certainement</span></div>
@@ -248,11 +331,11 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
       </div>
     </div>
 
-    <!-- 5. Amélioration -->
-    <div class="section">
-      <div class="section-title" data-num="5" id="sect-5">Aidez-nous à nous améliorer</div>
+    <!-- 5. Amelioration -->
+    <div class="section" data-section="5">
+      <div class="section-title" data-num="5" id="sect-5">Aidez-nous a nous ameliorer</div>
       <div class="field">
-        <label id="lbl-dislike">Qu'est-ce qui vous a le plus déçu ? <span class="req">*</span></label>
+        <label id="lbl-dislike">Qu'est-ce qui vous a le plus decu ? <span class="req">*</span></label>
         <textarea id="f-dislike"></textarea>
       </div>
       <div class="field">
@@ -260,7 +343,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         <textarea id="f-like"></textarea>
       </div>
       <div class="field">
-        <label id="lbl-improve">Que pourrions-nous améliorer ? <span class="req">*</span></label>
+        <label id="lbl-improve">Que pourrions-nous ameliorer ? <span class="req">*</span></label>
         <textarea id="f-improve"></textarea>
       </div>
       <div class="field">
@@ -268,28 +351,28 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
         <select id="f-source"></select>
       </div>
       <div class="field">
-        <label id="lbl-recommend">Recommanderiez-vous notre boutique malgré ce problème ? <span class="req">*</span></label>
+        <label id="lbl-recommend">Recommanderiez-vous notre boutique malgre ce probleme ? <span class="req">*</span></label>
         <div class="radio-group horizontal" id="rg-recommend"></div>
       </div>
     </div>
 
     <!-- 6. Confirmation -->
-    <div class="section">
+    <div class="section" data-section="6">
       <div class="section-title" data-num="6" id="sect-6">Confirmation</div>
       <div class="confirm-box" id="confirm-box" onclick="toggleConfirm()">
         <div class="confirm-check" id="confirm-check"></div>
-        <span id="confirm-text">Je certifie que les informations renseignées sont exactes et complètes. Je comprends que toute fausse déclaration pourrait entraîner le rejet de ma demande.</span>
+        <span id="confirm-text">Je certifie que les informations renseignees sont exactes et completes. Je comprends que toute fausse declaration pourrait entrainer le rejet de ma demande.</span>
       </div>
       <button class="submit-btn" id="submit-btn" onclick="submitForm()" disabled>Envoyer ma demande</button>
-      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:12px;" id="footer-text">Notre équipe vous répondra dans les plus brefs délais.</div>
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:12px;" id="footer-text">Notre equipe vous repondra dans les plus brefs delais.</div>
     </div>
 
   </div>
 
   <div id="success">
-    <div class="success-icon">✅</div>
-    <div class="success-title" id="success-title">Demande envoyée</div>
-    <p class="success-sub" id="success-sub">Votre demande a bien été reçue.<br>Notre équipe vous répondra à l'adresse indiquée dans les plus brefs délais.</p>
+    <div class="success-icon">&#x2705;</div>
+    <div class="success-title" id="success-title">Demande envoyee</div>
+    <p class="success-sub" id="success-sub">Votre demande a bien ete recue.<br>Notre equipe vous repondra a l'adresse indiquee dans les plus brefs delais.</p>
   </div>
 </div>
 
@@ -303,119 +386,141 @@ const translations = {
     brand: "Service client",
     headerSub: "Demande de remboursement",
     pageTitle: "Votre demande",
-    pageSub: 'Remplissez ce formulaire pour soumettre votre demande. Notre équipe vous répondra dans les plus brefs délais. Les champs <span style="color:#dc2626">*</span> sont obligatoires.',
+    pageSub: 'Remplissez ce formulaire pour soumettre votre demande. Notre \u00e9quipe vous r\u00e9pondra dans les plus brefs d\u00e9lais. Les champs <span style="color:#dc2626">*</span> sont obligatoires.',
+    progressSteps: ["Informations","Probl\u00e8me","Solution","Satisfaction","Am\u00e9lioration","Confirmation"],
+    progressLabel: "\u00c9tape {n} sur {total}",
     sect1: "Vos informations",
-    sect2: "Nature du problème",
-    sect3: "Solution souhaitée",
+    sect2: "Nature du probl\u00e8me",
+    sect3: "Solution souhait\u00e9e",
     sect4: "Votre satisfaction",
-    sect5: "Aidez-nous à nous améliorer",
+    sect5: "Aidez-nous \u00e0 nous am\u00e9liorer",
     sect6: "Confirmation",
     lblName: 'Nom complet <span class="req">*</span>',
     phName: "Jean Dupont",
     lblEmail: 'Adresse email <span class="req">*</span>',
     phEmail: "jean@email.com",
-    lblOrder: "Numéro de commande",
+    lblPhone: 'T\u00e9l\u00e9phone <span class="req">*</span>',
+    phPhone: "+33 6 12 34 56 78",
+    lblOrder: "Num\u00e9ro de commande",
     phOrder: "ex: 10042",
-    lblTracking: "Numéro de suivi",
+    lblTracking: "Num\u00e9ro de suivi",
     phTracking: "TRK-2026-XXXXX",
-    lblProduct: 'Produit concerné <span class="req">*</span>',
-    phProduct: "Nom du produit commandé",
+    lblAmount: 'Montant de la commande <span class="req">*</span>',
+    phAmount: "49.90",
+    lblProduct: 'Produit concern\u00e9 <span class="req">*</span>',
+    phProduct: "Nom du produit command\u00e9",
+    lblAddress: 'Adresse de livraison <span class="req">*</span>',
+    phAddress: "12 rue de la Paix, 75001 Paris",
     lblMotif: 'Motif de la demande <span class="req">*</span>',
-    motifs: ["Colis non reçu","Produit endommagé à la réception","Produit non conforme à la description","Délai de livraison trop long","Erreur dans la commande","Autre"],
-    lblDesc: 'Description détaillée <span class="req">*</span>',
-    phDesc: "Décrivez votre problème en détail...",
-    lblIssueDate: 'Date du problème <span class="req">*</span>',
-    lblContact: 'Avez-vous déjà contacté notre support ? <span class="req">*</span>',
+    motifs: ["Colis non re\u00e7u","Produit endommag\u00e9 \u00e0 la r\u00e9ception","Produit non conforme \u00e0 la description","D\u00e9lai de livraison trop long","Erreur dans la commande","Autre"],
+    lblDesc: 'Description d\u00e9taill\u00e9e <span class="req">*</span>',
+    phDesc: "D\u00e9crivez votre probl\u00e8me en d\u00e9tail...",
+    lblIssueDate: 'Date du probl\u00e8me <span class="req">*</span>',
+    lblPhotos: "Photos / preuves",
+    uploadText: 'Glissez vos photos ici ou <span>parcourir</span>',
+    uploadHint: "JPG, PNG \u2014 max 5 fichiers, 5 Mo chacun",
+    lblContact: 'Avez-vous d\u00e9j\u00e0 contact\u00e9 notre support ? <span class="req">*</span>',
     yesNo: ["Oui","Non"],
     lblSolution: 'Que souhaitez-vous ? <span class="req">*</span>',
     solutions: ["Remboursement complet","Remboursement partiel","Renvoi du produit","Bon d'achat","Autre"],
-    lblIban: 'IBAN (si remboursement bancaire) <span class="req">*</span>',
+    lblIban: 'IBAN (pour le remboursement) <span class="req">*</span>',
     phIban: "FR76 XXXX XXXX XXXX XXXX XXXX XXX",
-    ibanHint: "Utilisé uniquement pour procéder au remboursement.",
-    lblRating: 'Note globale de votre expérience <span class="req">*</span>',
+    ibanHint: "Utilis\u00e9 uniquement pour proc\u00e9der au remboursement.",
+    lblRating: 'Note globale de votre exp\u00e9rience <span class="req">*</span>',
     starLabel: "Cliquez pour noter",
-    starLabels: ['','Très insatisfait','Insatisfait','Neutre','Satisfait','Très satisfait'],
-    lblDelivery: 'La livraison a-t-elle correspondu à vos attentes ? <span class="req">*</span>',
+    starLabels: ['','Tr\u00e8s insatisfait','Insatisfait','Neutre','Satisfait','Tr\u00e8s satisfait'],
+    lblDelivery: 'La livraison a-t-elle correspondu \u00e0 vos attentes ? <span class="req">*</span>',
     deliveryOpts: ["Oui","Non","Partiellement"],
-    lblNps: 'Probabilité de nous recommander (0 → 10) <span class="req">*</span>',
-    npsMin: "0 — Pas du tout",
-    npsMax: "10 — Certainement",
-    lblDislike: 'Qu\'est-ce qui vous a le plus déçu ? <span class="req">*</span>',
+    lblNps: 'Probabilit\u00e9 de nous recommander (0 \u2192 10) <span class="req">*</span>',
+    npsMin: "0 \u2014 Pas du tout",
+    npsMax: "10 \u2014 Certainement",
+    lblDislike: 'Qu\'est-ce qui vous a le plus d\u00e9\u00e7u ? <span class="req">*</span>',
     phDislike: "La livraison, le produit, le service client...",
     lblLike: 'Qu\'est-ce qui vous a satisfait ? <span class="req">*</span>',
-    phLike: "Ce que vous avez apprécié...",
-    lblImprove: 'Que pourrions-nous améliorer ? <span class="req">*</span>',
+    phLike: "Ce que vous avez appr\u00e9ci\u00e9...",
+    lblImprove: 'Que pourrions-nous am\u00e9liorer ? <span class="req">*</span>',
     phImprove: "Vos suggestions...",
     lblSource: 'Comment avez-vous connu notre boutique ? <span class="req">*</span>',
-    sourceOpts: ["Sélectionner...","Réseaux sociaux (Instagram, TikTok...)","Publicité en ligne","Recommandation d'un proche","Moteur de recherche","Autre"],
-    lblRecommend: 'Recommanderiez-vous notre boutique malgré ce problème ? <span class="req">*</span>',
-    recommendOpts: ["Oui","Non","Si le problème est résolu"],
-    confirmText: "Je certifie que les informations renseignées sont exactes et complètes. Je comprends que toute fausse déclaration pourrait entraîner le rejet de ma demande.",
+    sourceOpts: ["S\u00e9lectionner...","R\u00e9seaux sociaux (Instagram, TikTok...)","Publicit\u00e9 en ligne","Recommandation d'un proche","Moteur de recherche","Autre"],
+    lblRecommend: 'Recommanderiez-vous notre boutique malgr\u00e9 ce probl\u00e8me ? <span class="req">*</span>',
+    recommendOpts: ["Oui","Non","Si le probl\u00e8me est r\u00e9solu"],
+    confirmText: "Je certifie que les informations renseign\u00e9es sont exactes et compl\u00e8tes. Je comprends que toute fausse d\u00e9claration pourrait entra\u00eener le rejet de ma demande.",
     submitBtn: "Envoyer ma demande",
     submitting: "Envoi en cours...",
-    footerText: "Notre équipe vous répondra dans les plus brefs délais.",
-    successTitle: "Demande envoyée",
-    successSub: "Votre demande a bien été reçue.<br>Notre équipe vous répondra à l'adresse indiquée dans les plus brefs délais.",
-    submitError: "Erreur lors de l'envoi. Veuillez réessayer."
+    footerText: "Notre \u00e9quipe vous r\u00e9pondra dans les plus brefs d\u00e9lais.",
+    successTitle: "Demande envoy\u00e9e",
+    successSub: "Votre demande a bien \u00e9t\u00e9 re\u00e7ue.<br>Notre \u00e9quipe vous r\u00e9pondra \u00e0 l'adresse indiqu\u00e9e dans les plus brefs d\u00e9lais.",
+    submitError: "Erreur lors de l'envoi. Veuillez r\u00e9essayer."
   },
   de: {
-    title: "Rückerstattungsantrag",
+    title: "R\u00fcckerstattungsantrag",
     brand: "Kundenservice",
-    headerSub: "Rückerstattungsantrag",
+    headerSub: "R\u00fcckerstattungsantrag",
     pageTitle: "Ihr Antrag",
-    pageSub: 'Füllen Sie dieses Formular aus, um Ihren Antrag einzureichen. Unser Team wird sich so schnell wie möglich bei Ihnen melden. Felder mit <span style="color:#dc2626">*</span> sind Pflichtfelder.',
+    pageSub: 'F\u00fcllen Sie dieses Formular aus, um Ihren Antrag einzureichen. Unser Team wird sich so schnell wie m\u00f6glich bei Ihnen melden. Felder mit <span style="color:#dc2626">*</span> sind Pflichtfelder.',
+    progressSteps: ["Informationen","Problem","L\u00f6sung","Zufriedenheit","Verbesserung","Best\u00e4tigung"],
+    progressLabel: "Schritt {n} von {total}",
     sect1: "Ihre Informationen",
     sect2: "Art des Problems",
-    sect3: "Gewünschte Lösung",
+    sect3: "Gew\u00fcnschte L\u00f6sung",
     sect4: "Ihre Zufriedenheit",
     sect5: "Helfen Sie uns, besser zu werden",
-    sect6: "Bestätigung",
-    lblName: 'Vollständiger Name <span class="req">*</span>',
+    sect6: "Best\u00e4tigung",
+    lblName: 'Vollst\u00e4ndiger Name <span class="req">*</span>',
     phName: "Max Mustermann",
     lblEmail: 'E-Mail-Adresse <span class="req">*</span>',
     phEmail: "max@email.de",
+    lblPhone: 'Telefonnummer <span class="req">*</span>',
+    phPhone: "+49 170 1234567",
     lblOrder: "Bestellnummer",
     phOrder: "z.B.: 10042",
     lblTracking: "Sendungsnummer",
     phTracking: "TRK-2026-XXXXX",
+    lblAmount: 'Bestellbetrag <span class="req">*</span>',
+    phAmount: "49.90",
     lblProduct: 'Betroffenes Produkt <span class="req">*</span>',
     phProduct: "Name des bestellten Produkts",
+    lblAddress: 'Lieferadresse <span class="req">*</span>',
+    phAddress: "Musterstra\u00dfe 12, 10115 Berlin",
     lblMotif: 'Grund des Antrags <span class="req">*</span>',
-    motifs: ["Paket nicht erhalten","Produkt beschädigt angekommen","Produkt entspricht nicht der Beschreibung","Lieferzeit zu lang","Fehler in der Bestellung","Sonstiges"],
-    lblDesc: 'Ausführliche Beschreibung <span class="req">*</span>',
+    motifs: ["Paket nicht erhalten","Produkt besch\u00e4digt angekommen","Produkt entspricht nicht der Beschreibung","Lieferzeit zu lang","Fehler in der Bestellung","Sonstiges"],
+    lblDesc: 'Ausf\u00fchrliche Beschreibung <span class="req">*</span>',
     phDesc: "Beschreiben Sie Ihr Problem im Detail...",
     lblIssueDate: 'Datum des Problems <span class="req">*</span>',
+    lblPhotos: "Fotos / Nachweise",
+    uploadText: 'Fotos hierher ziehen oder <span>durchsuchen</span>',
+    uploadHint: "JPG, PNG \u2014 max 5 Dateien, je 5 MB",
     lblContact: 'Haben Sie bereits unseren Support kontaktiert? <span class="req">*</span>',
     yesNo: ["Ja","Nein"],
-    lblSolution: 'Was möchten Sie? <span class="req">*</span>',
-    solutions: ["Vollständige Erstattung","Teilerstattung","Erneutes Versenden","Gutschein","Sonstiges"],
-    lblIban: 'IBAN (bei Banküberweisung) <span class="req">*</span>',
+    lblSolution: 'Was m\u00f6chten Sie? <span class="req">*</span>',
+    solutions: ["Vollst\u00e4ndige Erstattung","Teilerstattung","Erneutes Versenden","Gutschein","Sonstiges"],
+    lblIban: 'IBAN (f\u00fcr die R\u00fcckerstattung) <span class="req">*</span>',
     phIban: "DE89 XXXX XXXX XXXX XXXX XX",
-    ibanHint: "Wird ausschließlich für die Rückerstattung verwendet.",
+    ibanHint: "Wird ausschlie\u00dflich f\u00fcr die R\u00fcckerstattung verwendet.",
     lblRating: 'Gesamtbewertung Ihrer Erfahrung <span class="req">*</span>',
     starLabel: "Zum Bewerten klicken",
     starLabels: ['','Sehr unzufrieden','Unzufrieden','Neutral','Zufrieden','Sehr zufrieden'],
     lblDelivery: 'Hat die Lieferung Ihren Erwartungen entsprochen? <span class="req">*</span>',
     deliveryOpts: ["Ja","Nein","Teilweise"],
-    lblNps: 'Wahrscheinlichkeit, uns weiterzuempfehlen (0 → 10) <span class="req">*</span>',
-    npsMin: "0 — Überhaupt nicht",
-    npsMax: "10 — Auf jeden Fall",
-    lblDislike: 'Was hat Sie am meisten enttäuscht? <span class="req">*</span>',
+    lblNps: 'Wahrscheinlichkeit, uns weiterzuempfehlen (0 \u2192 10) <span class="req">*</span>',
+    npsMin: "0 \u2014 \u00dcberhaupt nicht",
+    npsMax: "10 \u2014 Auf jeden Fall",
+    lblDislike: 'Was hat Sie am meisten entt\u00e4uscht? <span class="req">*</span>',
     phDislike: "Die Lieferung, das Produkt, der Kundenservice...",
     lblLike: 'Was hat Ihnen gefallen? <span class="req">*</span>',
-    phLike: "Was Sie geschätzt haben...",
-    lblImprove: 'Was könnten wir verbessern? <span class="req">*</span>',
-    phImprove: "Ihre Vorschläge...",
+    phLike: "Was Sie gesch\u00e4tzt haben...",
+    lblImprove: 'Was k\u00f6nnten wir verbessern? <span class="req">*</span>',
+    phImprove: "Ihre Vorschl\u00e4ge...",
     lblSource: 'Wie haben Sie von unserem Shop erfahren? <span class="req">*</span>',
-    sourceOpts: ["Auswählen...","Soziale Netzwerke (Instagram, TikTok...)","Online-Werbung","Empfehlung von Freunden","Suchmaschine","Sonstiges"],
-    lblRecommend: 'Würden Sie unseren Shop trotz dieses Problems weiterempfehlen? <span class="req">*</span>',
-    recommendOpts: ["Ja","Nein","Wenn das Problem gelöst ist"],
-    confirmText: "Ich bestätige, dass die angegebenen Informationen korrekt und vollständig sind. Ich verstehe, dass falsche Angaben zur Ablehnung meines Antrags führen können.",
+    sourceOpts: ["Ausw\u00e4hlen...","Soziale Netzwerke (Instagram, TikTok...)","Online-Werbung","Empfehlung von Freunden","Suchmaschine","Sonstiges"],
+    lblRecommend: 'W\u00fcrden Sie unseren Shop trotz dieses Problems weiterempfehlen? <span class="req">*</span>',
+    recommendOpts: ["Ja","Nein","Wenn das Problem gel\u00f6st ist"],
+    confirmText: "Ich best\u00e4tige, dass die angegebenen Informationen korrekt und vollst\u00e4ndig sind. Ich verstehe, dass falsche Angaben zur Ablehnung meines Antrags f\u00fchren k\u00f6nnen.",
     submitBtn: "Antrag absenden",
     submitting: "Wird gesendet...",
-    footerText: "Unser Team wird sich so schnell wie möglich bei Ihnen melden.",
+    footerText: "Unser Team wird sich so schnell wie m\u00f6glich bei Ihnen melden.",
     successTitle: "Antrag gesendet",
-    successSub: "Ihr Antrag wurde erfolgreich empfangen.<br>Unser Team wird sich an die angegebene Adresse so schnell wie möglich bei Ihnen melden.",
+    successSub: "Ihr Antrag wurde erfolgreich empfangen.<br>Unser Team wird sich an die angegebene Adresse so schnell wie m\u00f6glich bei Ihnen melden.",
     submitError: "Fehler beim Senden. Bitte versuchen Sie es erneut."
   }
 };
@@ -430,11 +535,38 @@ function detectLang() {
 let currentLang = detectLang();
 
 function buildRadioGroup(groupId, options) {
-  const html = options.map(opt => 
+  const html = options.map(opt =>
     `<label class="radio-item" onclick="selectRadio(this,'${groupId}')"><input type="radio"><div class="radio-dot"></div>${opt}</label>`
   ).join('');
   document.getElementById(groupId).innerHTML = html;
 }
+
+// ===== PROGRESS BAR =====
+function updateProgress() {
+  const t = translations[currentLang];
+  const sections = document.querySelectorAll('.section[data-section]');
+  let currentSection = 1;
+
+  sections.forEach(s => {
+    const rect = s.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.5) {
+      currentSection = parseInt(s.dataset.section);
+    }
+  });
+
+  const total = 6;
+  const pct = Math.round((currentSection / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = t.progressLabel.replace('{n}', currentSection).replace('{total}', total);
+
+  const stepsEl = document.getElementById('progress-steps');
+  stepsEl.innerHTML = t.progressSteps.map((label, i) => {
+    const cls = (i + 1) < currentSection ? 'done' : (i + 1) === currentSection ? 'active' : '';
+    return `<span class="progress-step ${cls}">${label}</span>`;
+  }).join('');
+}
+
+window.addEventListener('scroll', updateProgress);
 
 function applyLang() {
   const t = translations[currentLang];
@@ -444,39 +576,54 @@ function applyLang() {
   document.getElementById('header-sub').textContent = t.headerSub;
   document.getElementById('page-title').textContent = t.pageTitle;
   document.getElementById('page-sub').innerHTML = t.pageSub;
-  
+
   document.getElementById('sect-1').textContent = t.sect1;
   document.getElementById('sect-2').textContent = t.sect2;
   document.getElementById('sect-3').textContent = t.sect3;
   document.getElementById('sect-4').textContent = t.sect4;
   document.getElementById('sect-5').textContent = t.sect5;
   document.getElementById('sect-6').textContent = t.sect6;
-  
+
   document.getElementById('lbl-name').innerHTML = t.lblName;
   document.getElementById('f-name').placeholder = t.phName;
   document.getElementById('lbl-email').innerHTML = t.lblEmail;
   document.getElementById('f-email').placeholder = t.phEmail;
+  document.getElementById('lbl-phone').innerHTML = t.lblPhone;
+  document.getElementById('f-phone').placeholder = t.phPhone;
   document.getElementById('lbl-order').textContent = t.lblOrder;
   document.getElementById('f-order').placeholder = t.phOrder;
   document.getElementById('lbl-tracking').textContent = t.lblTracking;
   document.getElementById('f-tracking').placeholder = t.phTracking;
+  document.getElementById('lbl-amount').innerHTML = t.lblAmount;
+  document.getElementById('f-amount').placeholder = t.phAmount;
   document.getElementById('lbl-product').innerHTML = t.lblProduct;
   document.getElementById('f-product').placeholder = t.phProduct;
-  
+  document.getElementById('lbl-address').innerHTML = t.lblAddress;
+  document.getElementById('f-address').placeholder = t.phAddress;
+
   document.getElementById('lbl-motif').innerHTML = t.lblMotif;
   buildRadioGroup('rg-motif', t.motifs);
   document.getElementById('lbl-desc').innerHTML = t.lblDesc;
   document.getElementById('f-desc').placeholder = t.phDesc;
   document.getElementById('lbl-issue-date').innerHTML = t.lblIssueDate;
+  document.getElementById('lbl-photos').innerHTML = t.lblPhotos;
+  document.getElementById('upload-text').innerHTML = t.uploadText;
+  document.getElementById('upload-hint').textContent = t.uploadHint;
   document.getElementById('lbl-contact').innerHTML = t.lblContact;
   buildRadioGroup('rg-contact', t.yesNo);
-  
+
   document.getElementById('lbl-solution').innerHTML = t.lblSolution;
   buildRadioGroup('rg-solution', t.solutions);
   document.getElementById('lbl-iban').innerHTML = t.lblIban;
   document.getElementById('f-iban').placeholder = t.phIban;
   document.getElementById('iban-hint').textContent = t.ibanHint;
-  
+
+  // Rebind solution click to toggle IBAN
+  document.querySelectorAll('#rg-solution .radio-item').forEach(item => {
+    const origClick = item.getAttribute('onclick');
+    item.addEventListener('click', toggleIbanField);
+  });
+
   document.getElementById('lbl-rating').innerHTML = t.lblRating;
   document.getElementById('star-label').textContent = starVal ? t.starLabels[starVal] : t.starLabel;
   document.getElementById('lbl-delivery').innerHTML = t.lblDelivery;
@@ -484,7 +631,7 @@ function applyLang() {
   document.getElementById('lbl-nps').innerHTML = t.lblNps;
   document.getElementById('nps-min').textContent = t.npsMin;
   document.getElementById('nps-max').textContent = t.npsMax;
-  
+
   document.getElementById('lbl-dislike').innerHTML = t.lblDislike;
   document.getElementById('f-dislike').placeholder = t.phDislike;
   document.getElementById('lbl-like').innerHTML = t.lblLike;
@@ -492,21 +639,23 @@ function applyLang() {
   document.getElementById('lbl-improve').innerHTML = t.lblImprove;
   document.getElementById('f-improve').placeholder = t.phImprove;
   document.getElementById('lbl-source').innerHTML = t.lblSource;
-  document.getElementById('f-source').innerHTML = t.sourceOpts.map((opt, i) => 
+  document.getElementById('f-source').innerHTML = t.sourceOpts.map((opt, i) =>
     `<option value="${i === 0 ? '' : opt}">${opt}</option>`
   ).join('');
   document.getElementById('lbl-recommend').innerHTML = t.lblRecommend;
   buildRadioGroup('rg-recommend', t.recommendOpts);
-  
+
   document.getElementById('confirm-text').textContent = t.confirmText;
   document.getElementById('submit-btn').textContent = t.submitBtn;
   document.getElementById('footer-text').textContent = t.footerText;
   document.getElementById('success-title').textContent = t.successTitle;
   document.getElementById('success-sub').innerHTML = t.successSub;
-  
+
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === currentLang);
   });
+
+  updateProgress();
 }
 
 document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -519,6 +668,7 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 
 let confirmed = false;
 let starVal = 0;
+let uploadedFiles = [];
 
 const params = new URLSearchParams(window.location.search);
 if (params.get('order'))    document.getElementById('f-order').value    = params.get('order');
@@ -529,6 +679,14 @@ function selectRadio(el, groupId) {
   document.querySelectorAll('#' + groupId + ' .radio-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById(groupId).classList.remove('error');
+}
+
+// ===== IBAN CONDITIONAL =====
+function toggleIbanField() {
+  const val = getRadioValue('rg-solution');
+  const t = translations[currentLang];
+  const needsIban = val === t.solutions[0] || val === t.solutions[1]; // complet ou partiel
+  document.getElementById('iban-field').classList.toggle('hidden', !needsIban);
 }
 
 function setStar(v) {
@@ -549,7 +707,7 @@ function updateNPS(input) {
 function toggleConfirm() {
   confirmed = !confirmed;
   document.getElementById('confirm-box').classList.toggle('selected', confirmed);
-  document.getElementById('confirm-check').textContent = confirmed ? '✓' : '';
+  document.getElementById('confirm-check').textContent = confirmed ? '\u2713' : '';
   document.getElementById('submit-btn').disabled = !confirmed;
 }
 
@@ -558,19 +716,72 @@ function getRadioValue(groupId) {
   return sel ? sel.textContent.trim() : '';
 }
 
+// ===== UPLOAD PHOTOS =====
+const uploadZone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('f-photos');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+function handleFiles(files) {
+  for (const file of files) {
+    if (uploadedFiles.length >= 5) break;
+    if (!file.type.startsWith('image/')) continue;
+    if (file.size > 5 * 1024 * 1024) continue;
+    uploadedFiles.push(file);
+  }
+  renderPreviews();
+}
+
+function removeFile(idx) {
+  uploadedFiles.splice(idx, 1);
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const container = document.getElementById('upload-previews');
+  container.innerHTML = '';
+  uploadedFiles.forEach((file, i) => {
+    const url = URL.createObjectURL(file);
+    const div = document.createElement('div');
+    div.className = 'upload-item';
+    div.innerHTML = `<img src="${url}" class="upload-thumb"><button class="upload-remove" onclick="removeFile(${i})">\u00d7</button>`;
+    container.appendChild(div);
+  });
+}
+
+// ===== VALIDATION =====
 function validateForm() {
   let valid = true;
+  const t = translations[currentLang];
 
   const required = [
-    { id: 'f-name' }, { id: 'f-email' }, { id: 'f-product' },
-    { id: 'f-desc' }, { id: 'f-iban' },
+    { id: 'f-name' }, { id: 'f-email' }, { id: 'f-phone' },
+    { id: 'f-product' }, { id: 'f-address' }, { id: 'f-desc' },
     { id: 'f-dislike' }, { id: 'f-like' }, { id: 'f-improve' },
   ];
+
+  // IBAN only required if visible
+  const ibanVisible = !document.getElementById('iban-field').classList.contains('hidden');
+  if (ibanVisible) required.push({ id: 'f-iban' });
+
   required.forEach(f => {
     const el = document.getElementById(f.id);
     if (!el.value.trim()) { el.classList.add('error'); valid = false; }
     else el.classList.remove('error');
   });
+
+  // Amount
+  const amountEl = document.getElementById('f-amount');
+  if (!amountEl.value || parseFloat(amountEl.value) <= 0) { amountEl.classList.add('error'); valid = false; }
+  else amountEl.classList.remove('error');
 
   const dateEl = document.getElementById('f-issue-date');
   if (!dateEl.value) { dateEl.classList.add('error'); valid = false; }
@@ -596,6 +807,28 @@ function validateForm() {
   return valid;
 }
 
+// ===== UPLOAD TO SUPABASE STORAGE =====
+async function uploadPhotos() {
+  const urls = [];
+  for (const file of uploadedFiles) {
+    const ext = file.name.split('.').pop();
+    const name = `refund_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/refund-photos/${name}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': file.type,
+      },
+      body: file
+    });
+    if (res.ok) {
+      urls.push(`${SUPABASE_URL}/storage/v1/object/public/refund-photos/${name}`);
+    }
+  }
+  return urls;
+}
+
 async function submitForm() {
   const t = translations[currentLang];
   if (!validateForm()) return;
@@ -604,17 +837,28 @@ async function submitForm() {
   btn.disabled = true;
   btn.textContent = t.submitting;
 
+  let photoUrls = [];
+  if (uploadedFiles.length > 0) {
+    photoUrls = await uploadPhotos();
+  }
+
+  const ibanVisible = !document.getElementById('iban-field').classList.contains('hidden');
+
   const payload = {
     customer_name:     document.getElementById('f-name').value.trim(),
     customer_email:    document.getElementById('f-email').value.trim(),
+    customer_phone:    document.getElementById('f-phone').value.trim(),
     order_number:      document.getElementById('f-order').value.trim() || null,
     tracking_id:       document.getElementById('f-tracking').value.trim() || null,
+    order_amount:      parseFloat(document.getElementById('f-amount').value) || null,
     product_name:      document.getElementById('f-product').value.trim(),
+    shipping_address:  document.getElementById('f-address').value.trim(),
     issue_date:        document.getElementById('f-issue-date').value,
     motif:             getRadioValue('rg-motif'),
     description:       document.getElementById('f-desc').value.trim(),
+    photos:            photoUrls.length > 0 ? photoUrls : null,
     solution:          getRadioValue('rg-solution'),
-    iban:              document.getElementById('f-iban').value.trim(),
+    iban:              ibanVisible ? document.getElementById('f-iban').value.trim() : null,
     contacted_support: getRadioValue('rg-contact'),
     rating:            starVal,
     delivery_ok:       getRadioValue('rg-delivery'),
@@ -639,6 +883,7 @@ async function submitForm() {
 
   if (res.ok) {
     document.getElementById('form-wrap').style.display = 'none';
+    document.querySelector('.progress-wrap').style.display = 'none';
     document.getElementById('success').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } else {

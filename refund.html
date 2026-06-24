@@ -807,27 +807,7 @@ function validateForm() {
   return valid;
 }
 
-// ===== UPLOAD TO SUPABASE STORAGE =====
-async function uploadPhotos() {
-  const urls = [];
-  for (const file of uploadedFiles) {
-    const ext = file.name.split('.').pop();
-    const name = `refund_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/refund-photos/${name}`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': file.type,
-      },
-      body: file
-    });
-    if (res.ok) {
-      urls.push(`${SUPABASE_URL}/storage/v1/object/public/refund-photos/${name}`);
-    }
-  }
-  return urls;
-}
+// Photos: upload zone is cosmetic only (not stored)
 
 async function submitForm() {
   const t = translations[currentLang];
@@ -836,11 +816,6 @@ async function submitForm() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = t.submitting;
-
-  let photoUrls = [];
-  if (uploadedFiles.length > 0) {
-    photoUrls = await uploadPhotos();
-  }
 
   const ibanVisible = !document.getElementById('iban-field').classList.contains('hidden');
 
@@ -856,7 +831,6 @@ async function submitForm() {
     issue_date:        document.getElementById('f-issue-date').value,
     motif:             getRadioValue('rg-motif'),
     description:       document.getElementById('f-desc').value.trim(),
-    photos:            photoUrls.length > 0 ? photoUrls : null,
     solution:          getRadioValue('rg-solution'),
     iban:              ibanVisible ? document.getElementById('f-iban').value.trim() : null,
     contacted_support: getRadioValue('rg-contact'),

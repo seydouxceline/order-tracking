@@ -458,6 +458,7 @@ const translations = {
     orderLabel: "COMMANDE",
     customerLabel: "Client",
     productLabel: "Produit",
+    deliveryAddressLabel: "Adresse de livraison",
     referenceLabel: "Référence",
     shippedFromLabel: "Expédié depuis",
     shippedFromValue: "Hub Logistique Istanbul, Turquie",
@@ -546,6 +547,7 @@ const translations = {
     orderLabel: "BESTELLUNG",
     customerLabel: "Kunde",
     productLabel: "Produkt",
+    deliveryAddressLabel: "Lieferadresse",
     referenceLabel: "Referenz",
     shippedFromLabel: "Versand ab",
     shippedFromValue: "Logistikzentrum Istanbul, Türkei",
@@ -905,6 +907,10 @@ async function renderOrder(order) {
             <div class="sidebar-info">${t.productLabel}</div>
             <div class="sidebar-value">${order.product_name || '-'}</div>
           </div>
+          ${order.shipping_address || order.city ? `<div class="sidebar-section">
+            <div class="sidebar-info">${t.deliveryAddressLabel}</div>
+            <div class="sidebar-value">${[order.shipping_address, order.city].filter(Boolean).join(', ')}</div>
+          </div>` : ''}
           <div class="sidebar-section">
             <div class="sidebar-info">${t.referenceLabel}</div>
             <div class="sidebar-value">#${order.order_number}</div>

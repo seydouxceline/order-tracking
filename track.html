@@ -532,7 +532,8 @@ const translations = {
       leipzig: "Leipzig",
       karlsruhe: "Karlsruhe (Douane)",
       frankfurt: "Frankfurt (Douane)"
-    }
+    },
+    yourCity: "Votre ville"
   },
   de: {
     pageTitle: "Lieferverfolgung",
@@ -619,7 +620,8 @@ const translations = {
       leipzig: "Leipzig",
       karlsruhe: "Karlsruhe (Zoll)",
       frankfurt: "Frankfurt (Zoll)"
-    }
+    },
+    yourCity: "Ihre Stadt"
   }
 };
 
@@ -698,13 +700,15 @@ function getRoute(country, clientCity, clientCoords) {
   
   // Dernière étape : ville du client
   if (clientCoords) {
-    route.push({ name: clientCity || (isGermany ? 'Berlin' : 'Paris'), coords: clientCoords, step: 'delivered' });
+    route.push({ name: clientCity || t.yourCity, coords: clientCoords, step: 'delivered' });
   } else {
-    // Fallback si géocodage échoue
-    route.push({ 
-      name: clientCity || (isGermany ? 'Berlin' : 'Paris'), 
-      coords: isGermany ? [52.5200, 13.4050] : [48.8566, 2.3522], 
-      step: 'delivered' 
+    // Pas de coordonnées — ne pas afficher de fausse ville
+    // On met le dernier point connu (Karlsruhe/Frankfurt) comme fin de trajet visible
+    route.push({
+      name: t.yourCity,
+      coords: isGermany ? [51.0, 10.0] : [46.6, 2.5],  // Centre du pays (pas une ville)
+      step: 'delivered',
+      noMarker: true
     });
   }
   
@@ -774,9 +778,30 @@ async function renderOrder(order) {
     status = calculateAutoStatus(order.order_date || order.created_at);
   }
   
-  // Géocodage de la ville client
-  const clientCoords = await geocodeCity(order.city, order.country);
-  const route = getRoute(order.country, order.city, clientCoords);
+  // Géocodage de la ville client — essayer ville commande, sinon géoloc navigateur
+  let clientCity = order.city;
+  let clientCoords = null;
+  if (clientCity) {
+    clientCoords = await geocodeCity(clientCity, order.country);
+  }
+  if (!clientCoords) {
+    // Fallback: géolocalisation navigateur
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+      });
+      clientCoords = [pos.coords.latitude, pos.coords.longitude];
+      // Reverse geocode pour le nom de ville
+      if (!clientCity) {
+        try {
+          const rgRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${clientCoords[0]}&lon=${clientCoords[1]}`);
+          const rgData = await rgRes.json();
+          clientCity = rgData.address?.city || rgData.address?.town || rgData.address?.village || null;
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }
+  const route = getRoute(order.country, clientCity, clientCoords);
   const truckIdx = getTruckPosition(status, route);
   
   const banner = t.banners[status] || t.banners.confirmed;
@@ -981,23 +1006,16 @@ function initMap(route, truckIdx, status) {
   });
   L.marker(route[truckIdx].coords, { icon: truckIcon }).addTo(map);
 
-  // Marqueur destination (maison) — toujours visible
-  if (truckIdx < route.length - 1) {
+  // Marqueur destination (maison) — seulement si on a la vraie position
+  const lastPoint = route[route.length - 1];
+  if (!lastPoint.noMarker) {
     const homeIcon = L.divIcon({
-      html: '<div style="font-size: 28px; opacity: 0.5;">🏠</div>',
+      html: '<div style="font-size: 28px;' + (truckIdx < route.length - 1 ? ' opacity: 0.5;' : '') + '">🏠</div>',
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       className: 'truck-marker'
     });
-    L.marker(route[route.length - 1].coords, { icon: homeIcon }).addTo(map);
-  } else {
-    const homeIcon = L.divIcon({
-      html: '<div style="font-size: 28px;">🏠</div>',
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
-      className: 'truck-marker'
-    });
-    L.marker(route[route.length - 1].coords, { icon: homeIcon }).addTo(map);
+    L.marker(lastPoint.coords, { icon: homeIcon }).addTo(map);
   }
 
   // Zoom sur tout le trajet (parcouru + futur)

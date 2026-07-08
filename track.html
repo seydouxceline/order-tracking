@@ -365,6 +365,11 @@ body {
   margin-top: 6px;
   opacity: 0.8;
 }
+.current-loc {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+}
 
 .truck-marker {
   background: none !important;
@@ -897,19 +902,28 @@ function normalizeCountry(country) {
   return 'FR';
 }
 
-// Hubs par pays : ville de transit régionale + ville de dédouanement + transporteur last-mile
+// Tronc commun international (départ Istanbul → entrée en Europe)
+const COMMON_TRUNK = [
+  ['Istanbul', [41.0082, 28.9784]],
+  ['Sofia', [42.6977, 23.3219]],
+  ['Beograd', [44.7866, 20.4489]],
+  ['Budapest', [47.4979, 19.0402]]
+];
+
+// Hubs par pays : chaîne de villes (transit → ... → dédouanement) + transporteur last-mile.
+// La DERNIÈRE ville de `legs` = dédouanement (reçoit le libellé "Douane").
 const COUNTRY_HUBS = {
-  FR: { transit: ['Lyon', [45.7640, 4.8357]], customs: ['Roissy', [49.0097, 2.5479]], carrier: 'Colissimo' },
-  DE: { transit: ['Leipzig', [51.3397, 12.3731]], customs: ['Frankfurt', [50.1109, 8.6821]], carrier: 'DHL' },
-  IT: { transit: ['Verona', [45.4384, 10.9916]], customs: ['Milano', [45.4642, 9.1900]], carrier: 'Poste Italiane' },
-  NO: { transit: ['Göteborg', [57.7089, 11.9746]], customs: ['Oslo', [59.9139, 10.7522]], carrier: 'Posten Bring' },
-  SE: { transit: ['Malmö', [55.6050, 13.0038]], customs: ['Stockholm', [59.3293, 18.0686]], carrier: 'PostNord' },
-  DK: { transit: ['Hamburg', [53.5511, 9.9937]], customs: ['København', [55.6761, 12.5683]], carrier: 'PostNord' },
-  BE: { transit: ['Liège', [50.6326, 5.5797]], customs: ['Bruxelles', [50.8503, 4.3517]], carrier: 'bpost' },
-  NL: { transit: ['Eindhoven', [51.4416, 5.4697]], customs: ['Amsterdam', [52.3676, 4.9041]], carrier: 'PostNL' },
-  ES: { transit: ['Zaragoza', [41.6488, -0.8891]], customs: ['Madrid', [40.4168, -3.7038]], carrier: 'Correos' },
-  CH: { transit: ['Bern', [46.9480, 7.4474]], customs: ['Zürich', [47.3769, 8.5417]], carrier: 'Swiss Post' },
-  AT: { transit: ['Linz', [48.3069, 14.2858]], customs: ['Wien', [48.2082, 16.3738]], carrier: 'Österreichische Post' }
+  FR: { legs: [['München', [48.1351, 11.5820]], ['Strasbourg', [48.5734, 7.7521]], ['Lyon', [45.7640, 4.8357]], ['Roissy', [49.0097, 2.5479]]], carrier: 'Colissimo' },
+  DE: { legs: [['Wien', [48.2082, 16.3738]], ['Nürnberg', [49.4521, 11.0767]], ['Leipzig', [51.3397, 12.3731]], ['Frankfurt', [50.1109, 8.6821]]], carrier: 'DHL' },
+  IT: { legs: [['Zagreb', [45.8150, 15.9819]], ['Ljubljana', [46.0569, 14.5058]], ['Verona', [45.4384, 10.9916]], ['Milano', [45.4642, 9.1900]]], carrier: 'Poste Italiane' },
+  NO: { legs: [['Wien', [48.2082, 16.3738]], ['Berlin', [52.5200, 13.4050]], ['Göteborg', [57.7089, 11.9746]], ['Oslo', [59.9139, 10.7522]]], carrier: 'Posten Bring' },
+  SE: { legs: [['Wien', [48.2082, 16.3738]], ['Berlin', [52.5200, 13.4050]], ['Malmö', [55.6050, 13.0038]], ['Stockholm', [59.3293, 18.0686]]], carrier: 'PostNord' },
+  DK: { legs: [['Wien', [48.2082, 16.3738]], ['Berlin', [52.5200, 13.4050]], ['Hamburg', [53.5511, 9.9937]], ['København', [55.6761, 12.5683]]], carrier: 'PostNord' },
+  BE: { legs: [['München', [48.1351, 11.5820]], ['Frankfurt', [50.1109, 8.6821]], ['Köln', [50.9375, 6.9603]], ['Bruxelles', [50.8503, 4.3517]]], carrier: 'bpost' },
+  NL: { legs: [['München', [48.1351, 11.5820]], ['Frankfurt', [50.1109, 8.6821]], ['Köln', [50.9375, 6.9603]], ['Amsterdam', [52.3676, 4.9041]]], carrier: 'PostNL' },
+  ES: { legs: [['München', [48.1351, 11.5820]], ['Lyon', [45.7640, 4.8357]], ['Zaragoza', [41.6488, -0.8891]], ['Madrid', [40.4168, -3.7038]]], carrier: 'Correos' },
+  CH: { legs: [['Wien', [48.2082, 16.3738]], ['München', [48.1351, 11.5820]], ['Innsbruck', [47.2692, 11.4041]], ['Zürich', [47.3769, 8.5417]]], carrier: 'Swiss Post' },
+  AT: { legs: [['Zagreb', [45.8150, 15.9819]], ['Graz', [47.0707, 15.4395]], ['Linz', [48.3069, 14.2858]], ['Wien', [48.2082, 16.3738]]], carrier: 'Österreichische Post' }
 };
 function hubFor(country) { return COUNTRY_HUBS[normalizeCountry(country)] || COUNTRY_HUBS.FR; }
 
@@ -918,40 +932,48 @@ function getRoute(country, clientCity, clientCoords) {
   const customsWord = { fr: 'Douane', de: 'Zoll', it: 'Dogana', no: 'Toll', sv: 'Tull', da: 'Told' }[currentLang] || 'Douane';
   const hub = hubFor(country);
 
-  const route = [
-    { name: t.cities.istanbul, coords: [41.0082, 28.9784], step: 'transit' },
-    { name: t.cities.sofia, coords: [42.6977, 23.3219], step: 'transit' },
-    { name: hub.transit[0], coords: hub.transit[1], step: 'transit' },
-    { name: `${hub.customs[0]} (${customsWord})`, coords: hub.customs[1], step: 'customs' }
-  ];
+  // Tronc commun + chaîne de villes du pays
+  const route = COMMON_TRUNK.map(c => ({ name: c[0], coords: c[1], step: 'transit' }));
+  hub.legs.forEach((c, i) => {
+    const isCustoms = i === hub.legs.length - 1;
+    route.push({
+      name: isCustoms ? `${c[0]} (${customsWord})` : c[0],
+      coords: c[1],
+      step: isCustoms ? 'customs' : 'transit'
+    });
+  });
 
   // Dernière étape : ville du client
   if (clientCoords) {
     route.push({ name: clientCity || t.yourCity, coords: clientCoords, step: 'delivered' });
   } else {
     // Pas de coordonnées — dernier point connu (dédouanement) comme fin de trajet visible
-    route.push({ name: t.yourCity, coords: hub.customs[1], step: 'delivered', noMarker: true });
+    const lastLeg = hub.legs[hub.legs.length - 1];
+    route.push({ name: t.yourCity, coords: lastLeg[1], step: 'delivered', noMarker: true });
   }
 
   return route;
 }
 
-// ===== POSITION DU CAMION SELON STATUT =====
+// ===== POSITION DU CAMION (progression selon le TEMPS écoulé, pas juste le statut) =====
 // getBusinessDaysElapsed & calculateAutoStatus loaded from shared.js
+// Le colis met ~60 jours ouvrés → le camion avance d'environ une ville par semaine
+// pour que le client voie du mouvement en continu (moins d'angoisse "colis bloqué").
 
-function getTruckPosition(status, route) {
-  // Route = [Istanbul, Sofia, hub transit, hub douane, client]
-  const n = route.length;
-  const statusToIndex = {
-    confirmed: 0,
-    processing: 0,
-    shipped: 1,
-    transit: 2,
-    customs: 3,
-    approach: Math.max(0, n - 2),
-    delivered: n - 1
-  };
-  return statusToIndex[status] !== undefined ? statusToIndex[status] : 0;
+function getTruckPosition(status, route, days) {
+  const lastIdx = route.length - 1;
+  if (status === 'delivered') return lastIdx;
+  const maxIdx = lastIdx - 1; // dernier arrêt avant le client (dédouanement)
+
+  let idx;
+  if (!days || days < 8) {
+    idx = 0; // confirmé / en préparation : reste au hub d'origine
+  } else {
+    const frac = Math.min((days - 8) / (60 - 8), 1); // j8 → 0, j60 → 1
+    idx = 1 + Math.round(frac * (maxIdx - 1)); // avance ~1 ville / semaine
+  }
+
+  return Math.max(0, Math.min(idx, maxIdx));
 }
 
 // ===== AFFICHAGE COMMANDE =====
@@ -1024,8 +1046,14 @@ async function renderOrder(order) {
     } catch(e) {}
   }
   const route = getRoute(order.country, clientCity, clientCoords);
-  const truckIdx = getTruckPosition(status, route);
-  
+  const daysElapsed = getBusinessDaysElapsed(order.order_date || order.created_at);
+  const truckIdx = getTruckPosition(status, route, daysElapsed);
+  // Ville où se trouve actuellement le colis (change au fil des semaines)
+  const currentCity = (route[truckIdx] && route[truckIdx].name) ? route[truckIdx].name : '';
+  const locLabel = { fr: 'Position actuelle', de: 'Aktueller Standort', it: 'Posizione attuale', no: 'Nåværende posisjon', sv: 'Aktuell position', da: 'Aktuel position' }[currentLang] || 'Position actuelle';
+  const currentCityHTML = (status !== 'delivered' && currentCity)
+    ? `<p class="current-loc">📍 ${locLabel} : ${currentCity}</p>` : '';
+
   const banner = t.banners[status] || t.banners.confirmed;
   const statusLabel = t.statuses[status] || t.statuses.confirmed;
 
@@ -1113,6 +1141,7 @@ async function renderOrder(order) {
         <div class="status-banner-content">
           <h3>${banner.title}</h3>
           <p>${banner.text}</p>
+          ${currentCityHTML}
           <p class="last-update">${t.lastUpdate} : ${lastUpdateStr}</p>
         </div>
       </div>

@@ -1056,13 +1056,15 @@ async function renderOrder(order) {
   const currentCityHTML = (status !== 'delivered' && currentCity)
     ? `<p class="current-loc">📍 ${locLabel} : ${currentCity}</p>` : '';
 
-  const banner = t.banners[status] || t.banners.confirmed;
-  const statusLabel = t.statuses[status] || t.statuses.confirmed;
+  // 'shipped' n'a pas de libellé dédié → on l'affiche comme 'transit' (le colis EST en transit)
+  const viewStatus = (status === 'shipped') ? 'transit' : status;
+  const banner = t.banners[viewStatus] || t.banners.confirmed;
+  const statusLabel = t.statuses[viewStatus] || t.statuses.confirmed;
 
   // Badge dynamique
   const badgeEl = document.getElementById('route-badge');
-  badgeEl.textContent = t.badgeLabels[status] || t.badgeLabels.confirmed;
-  badgeEl.className = 'status-badge ' + (status === 'customs' ? 'transit' : status);
+  badgeEl.textContent = t.badgeLabels[viewStatus] || t.badgeLabels.confirmed;
+  badgeEl.className = 'status-badge ' + (viewStatus === 'customs' ? 'transit' : viewStatus);
 
   // Dernière mise à jour (updated_at ou order_date)
   const updatedAt = order.updated_at || order.order_date || order.created_at;

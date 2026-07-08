@@ -45,18 +45,24 @@ body {
   display: flex;
   gap: 8px;
 }
-.lang-btn {
-  background: none;
-  border: 1px solid transparent;
+.lang-select {
+  background: #fff;
+  border: 1px solid #e5e5e5;
   cursor: pointer;
-  font-size: 22px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  opacity: 0.4;
-  transition: opacity 0.2s;
+  font-size: 14px;
+  font-family: inherit;
+  padding: 7px 30px 7px 12px;
+  border-radius: 8px;
+  color: #333;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.2s;
 }
-.lang-btn.active { opacity: 1; border-color: #e5e5e5; }
-.lang-btn:hover { opacity: 0.8; }
+.lang-select:hover { border-color: #bbb; }
+.lang-select:focus { outline: none; border-color: #888; }
 .status-badge {
   padding: 6px 14px;
   border-radius: 20px;
@@ -383,8 +389,14 @@ body {
     </div>
     <div class="header-right">
       <div class="lang-switcher">
-        <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
-        <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+        <select class="lang-select" id="lang-select" aria-label="Langue / Language">
+          <option value="fr">🇫🇷 Français</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="no">🇳🇴 Norsk</option>
+          <option value="sv">🇸🇪 Svenska</option>
+          <option value="da">🇩🇰 Dansk</option>
+        </select>
       </div>
       <span class="status-badge default" id="route-badge">EN ROUTE</span>
     </div>
@@ -624,6 +636,190 @@ const translations = {
       frankfurt: "Frankfurt (Zoll)"
     },
     yourCity: "Ihre Stadt"
+  },
+  it: {
+    pageTitle: "Tracciamento spedizione",
+    routeBadge: "IN VIAGGIO",
+    searchTitle: "Traccia il mio ordine",
+    searchSubtitle: "Inserisci il numero di tracciamento ricevuto via email",
+    searchBtn: "Cerca",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Tracciamento",
+    orderLabel: "ORDINE",
+    customerLabel: "Cliente",
+    productLabel: "Prodotto",
+    deliveryAddressLabel: "Indirizzo di consegna",
+    referenceLabel: "Riferimento",
+    shippedFromLabel: "Spedito da",
+    shippedFromValue: "Hub Logistico Istanbul, Turchia",
+    faqTitle: "Domande frequenti",
+    faq: [
+      { q: "Perché il mio pacco è bloccato in dogana?", a: "Tutti i pacchi internazionali passano dalla dogana. Lo sdoganamento avviene automaticamente e non è richiesta alcuna azione da parte tua. Questa fase può richiedere alcuni giorni a seconda del volume gestito." },
+      { q: "Il tracciamento non cambia da diversi giorni, è normale?", a: "Se non noti alcun cambiamento di stato da più di alcuni giorni, non esitare a contattare il nostro supporto che ti risponderà rapidamente." },
+      { q: "Cosa fare se non sono a casa alla consegna?", a: "Il corriere lascerà un avviso di passaggio. Potrai ritirare il pacco nel punto di ritiro più vicino indicato sull'avviso, oppure pianificare una nuova consegna." },
+      { q: "Il mio pacco è andato perso?", a: "Se non appare alcun movimento da più di 60 giorni lavorativi, contatta il nostro supporto che aprirà un'indagine presso il corriere." }
+    ],
+    stepsLabel: "FASI",
+    questionLabel: "Una domanda?",
+    contactSupport: "Contatta il supporto →",
+    lastUpdate: "Ultimo aggiornamento",
+    progressNormal: "Il tuo pacco procede normalmente",
+    stepsCompleted: "{n}/{total} fasi completate",
+    orderDateLabel: "Data dell'ordine",
+    badgeLabels: { confirmed: "CONFERMATO", processing: "IN PREPARAZIONE", transit: "IN TRANSITO", customs: "IN TRANSITO", approach: "IN ARRIVO", delivered: "CONSEGNATO" },
+    loading: "Caricamento...",
+    notFound: "Nessun ordine trovato con questo numero di tracciamento.",
+    statuses: { confirmed: "Ordine confermato", processing: "In preparazione", transit: "In transito", customs: "In transito", approach: "In arrivo", delivered: "Consegnato" },
+    timelineSteps: { confirmed: "Ordine confermato", processing: "In preparazione", transit: "In transito", approach: "In arrivo", delivered: "Consegnato" },
+    timelineStatus: { completed: "Completato", pending: "In attesa", inProgress: "In corso", customs: "Trattenuto in dogana" },
+    banners: {
+      confirmed: { title: "Ordine confermato", text: "Il tuo ordine è stato ricevuto e confermato correttamente." },
+      processing: { title: "In preparazione", text: "Il tuo ordine è in preparazione nel nostro magazzino." },
+      transit: { title: "In transito", text: "Il tuo pacco è in viaggio verso l'Italia." },
+      customs: { title: "In transito", text: "Il tuo pacco è temporaneamente trattenuto in dogana — trattamento in corso, nessuna azione richiesta da parte tua." },
+      approach: { title: "In arrivo", text: "Il tuo pacco si avvicina al tuo indirizzo di consegna." },
+      delivered: { title: "Consegnato", text: "Il tuo ordine è stato consegnato con successo." }
+    },
+    cities: { istanbul: "Istanbul", sofia: "Sofia", leipzig: "Lipsia", karlsruhe: "Karlsruhe (Dogana)", frankfurt: "Francoforte (Dogana)" },
+    yourCity: "La tua città"
+  },
+  no: {
+    pageTitle: "Leveringssporing",
+    routeBadge: "UNDERVEIS",
+    searchTitle: "Spor bestillingen min",
+    searchSubtitle: "Skriv inn sporingsnummeret du mottok på e-post",
+    searchBtn: "Søk",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Sporing",
+    orderLabel: "BESTILLING",
+    customerLabel: "Kunde",
+    productLabel: "Produkt",
+    deliveryAddressLabel: "Leveringsadresse",
+    referenceLabel: "Referanse",
+    shippedFromLabel: "Sendt fra",
+    shippedFromValue: "Logistikksenter Istanbul, Tyrkia",
+    faqTitle: "Ofte stilte spørsmål",
+    faq: [
+      { q: "Hvorfor er pakken min i tollen?", a: "Alle internasjonale pakker går gjennom tollen. Tollklareringen skjer automatisk og krever ingen handling fra deg. Dette trinnet kan ta flere dager avhengig av volumet som behandles." },
+      { q: "Sporingen har ikke endret seg på flere dager, er det normalt?", a: "Hvis du ikke ser noen statusendring på mer enn noen dager, ikke nøl med å kontakte kundestøtten vår som svarer raskt." },
+      { q: "Hva gjør jeg hvis jeg ikke er hjemme ved levering?", a: "Transportøren legger igjen en melding. Du kan hente pakken på nærmeste utleveringssted som er angitt på meldingen, eller planlegge en ny levering." },
+      { q: "Har pakken min gått tapt?", a: "Hvis det ikke har vært bevegelse på mer enn 60 virkedager, kontakt kundestøtten vår som vil åpne en undersøkelse hos transportøren." }
+    ],
+    stepsLabel: "TRINN",
+    questionLabel: "Et spørsmål?",
+    contactSupport: "Kontakt kundestøtte →",
+    lastUpdate: "Sist oppdatert",
+    progressNormal: "Pakken din går som normalt",
+    stepsCompleted: "{n}/{total} trinn fullført",
+    orderDateLabel: "Bestillingsdato",
+    badgeLabels: { confirmed: "BEKREFTET", processing: "UNDER KLARGJØRING", transit: "UNDERVEIS", customs: "UNDERVEIS", approach: "NÆRMER SEG", delivered: "LEVERT" },
+    loading: "Laster...",
+    notFound: "Ingen bestilling funnet med dette sporingsnummeret.",
+    statuses: { confirmed: "Bestilling bekreftet", processing: "Under klargjøring", transit: "Underveis", customs: "Underveis", approach: "Nærmer seg", delivered: "Levert" },
+    timelineSteps: { confirmed: "Bestilling bekreftet", processing: "Under klargjøring", transit: "Underveis", approach: "Nærmer seg", delivered: "Levert" },
+    timelineStatus: { completed: "Fullført", pending: "Venter", inProgress: "Pågår", customs: "Holdt i tollen" },
+    banners: {
+      confirmed: { title: "Bestilling bekreftet", text: "Bestillingen din er mottatt og bekreftet." },
+      processing: { title: "Under klargjøring", text: "Bestillingen din klargjøres på lageret vårt." },
+      transit: { title: "Underveis", text: "Pakken din er på vei til Norge." },
+      customs: { title: "Underveis", text: "Pakken din holdes midlertidig i tollen — behandling pågår, ingen handling kreves fra deg." },
+      approach: { title: "Nærmer seg", text: "Pakken din nærmer seg leveringsadressen din." },
+      delivered: { title: "Levert", text: "Bestillingen din er levert." }
+    },
+    cities: { istanbul: "Istanbul", sofia: "Sofia", leipzig: "Leipzig", karlsruhe: "Karlsruhe (Toll)", frankfurt: "Frankfurt (Toll)" },
+    yourCity: "Byen din"
+  },
+  sv: {
+    pageTitle: "Leveransspårning",
+    routeBadge: "PÅ VÄG",
+    searchTitle: "Spåra min beställning",
+    searchSubtitle: "Ange spårningsnumret du fick via e-post",
+    searchBtn: "Sök",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Spårning",
+    orderLabel: "BESTÄLLNING",
+    customerLabel: "Kund",
+    productLabel: "Produkt",
+    deliveryAddressLabel: "Leveransadress",
+    referenceLabel: "Referens",
+    shippedFromLabel: "Skickat från",
+    shippedFromValue: "Logistikcenter Istanbul, Turkiet",
+    faqTitle: "Vanliga frågor",
+    faq: [
+      { q: "Varför är mitt paket i tullen?", a: "Alla internationella paket går genom tullen. Tullklareringen sker automatiskt och kräver ingen åtgärd från dig. Detta steg kan ta flera dagar beroende på volymen som hanteras." },
+      { q: "Spårningen har inte ändrats på flera dagar, är det normalt?", a: "Om du inte ser någon statusändring på mer än några dagar, tveka inte att kontakta vår support som svarar snabbt." },
+      { q: "Vad gör jag om jag inte är hemma vid leverans?", a: "Transportören lämnar en avi. Du kan hämta paketet vid närmaste utlämningsställe som anges på avin, eller boka en ny leverans." },
+      { q: "Har mitt paket kommit bort?", a: "Om ingen rörelse har skett på mer än 60 arbetsdagar, kontakta vår support som öppnar en utredning hos transportören." }
+    ],
+    stepsLabel: "STEG",
+    questionLabel: "En fråga?",
+    contactSupport: "Kontakta supporten →",
+    lastUpdate: "Senast uppdaterad",
+    progressNormal: "Ditt paket rör sig som det ska",
+    stepsCompleted: "{n}/{total} steg slutförda",
+    orderDateLabel: "Beställningsdatum",
+    badgeLabels: { confirmed: "BEKRÄFTAD", processing: "FÖRBEREDS", transit: "PÅ VÄG", customs: "PÅ VÄG", approach: "NÄRMAR SIG", delivered: "LEVERERAD" },
+    loading: "Laddar...",
+    notFound: "Ingen beställning hittades med detta spårningsnummer.",
+    statuses: { confirmed: "Beställning bekräftad", processing: "Förbereds", transit: "På väg", customs: "På väg", approach: "Närmar sig", delivered: "Levererad" },
+    timelineSteps: { confirmed: "Beställning bekräftad", processing: "Förbereds", transit: "På väg", approach: "Närmar sig", delivered: "Levererad" },
+    timelineStatus: { completed: "Slutförd", pending: "Väntar", inProgress: "Pågår", customs: "Kvarhållen i tullen" },
+    banners: {
+      confirmed: { title: "Beställning bekräftad", text: "Din beställning har mottagits och bekräftats." },
+      processing: { title: "Förbereds", text: "Din beställning förbereds i vårt lager." },
+      transit: { title: "På väg", text: "Ditt paket är på väg till Sverige." },
+      customs: { title: "På väg", text: "Ditt paket hålls tillfälligt kvar i tullen — behandling pågår, ingen åtgärd krävs från dig." },
+      approach: { title: "Närmar sig", text: "Ditt paket närmar sig din leveransadress." },
+      delivered: { title: "Levererad", text: "Din beställning har levererats." }
+    },
+    cities: { istanbul: "Istanbul", sofia: "Sofia", leipzig: "Leipzig", karlsruhe: "Karlsruhe (Tull)", frankfurt: "Frankfurt (Tull)" },
+    yourCity: "Din stad"
+  },
+  da: {
+    pageTitle: "Leveringssporing",
+    routeBadge: "PÅ VEJ",
+    searchTitle: "Spor min ordre",
+    searchSubtitle: "Indtast sporingsnummeret, du modtog via e-mail",
+    searchBtn: "Søg",
+    searchPlaceholder: "TRK-12345678",
+    trackingLabel: "Sporing",
+    orderLabel: "ORDRE",
+    customerLabel: "Kunde",
+    productLabel: "Produkt",
+    deliveryAddressLabel: "Leveringsadresse",
+    referenceLabel: "Reference",
+    shippedFromLabel: "Sendt fra",
+    shippedFromValue: "Logistikcenter Istanbul, Tyrkiet",
+    faqTitle: "Ofte stillede spørgsmål",
+    faq: [
+      { q: "Hvorfor er min pakke i tolden?", a: "Alle internationale pakker går gennem tolden. Toldbehandlingen sker automatisk og kræver ingen handling fra dig. Dette trin kan tage flere dage afhængigt af den behandlede mængde." },
+      { q: "Sporingen har ikke ændret sig i flere dage, er det normalt?", a: "Hvis du ikke ser nogen statusændring i mere end nogle dage, så tøv ikke med at kontakte vores support, som svarer hurtigt." },
+      { q: "Hvad gør jeg, hvis jeg ikke er hjemme ved levering?", a: "Transportøren efterlader en meddelelse. Du kan hente pakken på nærmeste udleveringssted, der er angivet på meddelelsen, eller planlægge en ny levering." },
+      { q: "Er min pakke gået tabt?", a: "Hvis der ikke har været bevægelse i mere end 60 arbejdsdage, kontakt vores support, som åbner en undersøgelse hos transportøren." }
+    ],
+    stepsLabel: "TRIN",
+    questionLabel: "Et spørgsmål?",
+    contactSupport: "Kontakt support →",
+    lastUpdate: "Senest opdateret",
+    progressNormal: "Din pakke skrider frem som normalt",
+    stepsCompleted: "{n}/{total} trin gennemført",
+    orderDateLabel: "Bestillingsdato",
+    badgeLabels: { confirmed: "BEKRÆFTET", processing: "UNDER KLARGØRING", transit: "PÅ VEJ", customs: "PÅ VEJ", approach: "NÆRMER SIG", delivered: "LEVERET" },
+    loading: "Indlæser...",
+    notFound: "Ingen ordre fundet med dette sporingsnummer.",
+    statuses: { confirmed: "Ordre bekræftet", processing: "Under klargøring", transit: "På vej", customs: "På vej", approach: "Nærmer sig", delivered: "Leveret" },
+    timelineSteps: { confirmed: "Ordre bekræftet", processing: "Under klargøring", transit: "På vej", approach: "Nærmer sig", delivered: "Leveret" },
+    timelineStatus: { completed: "Gennemført", pending: "Afventer", inProgress: "I gang", customs: "Tilbageholdt i tolden" },
+    banners: {
+      confirmed: { title: "Ordre bekræftet", text: "Din ordre er modtaget og bekræftet." },
+      processing: { title: "Under klargøring", text: "Din ordre klargøres på vores lager." },
+      transit: { title: "På vej", text: "Din pakke er på vej til Danmark." },
+      customs: { title: "På vej", text: "Din pakke tilbageholdes midlertidigt i tolden — behandling i gang, ingen handling kræves fra dig." },
+      approach: { title: "Nærmer sig", text: "Din pakke nærmer sig din leveringsadresse." },
+      delivered: { title: "Leveret", text: "Din ordre er blevet leveret." }
+    },
+    cities: { istanbul: "Istanbul", sofia: "Sofia", leipzig: "Leipzig", karlsruhe: "Karlsruhe (Told)", frankfurt: "Frankfurt (Told)" },
+    yourCity: "Din by"
   }
 };
 
@@ -648,20 +844,17 @@ function applyLang() {
   document.getElementById('search-btn').textContent = t.searchBtn;
   document.getElementById('tracking-input').placeholder = t.searchPlaceholder;
   
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === currentLang);
-  });
+  const sel = document.getElementById('lang-select');
+  if (sel) sel.value = currentLang;
 }
 
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentLang = btn.dataset.lang;
-    localStorage.setItem('trackLang', currentLang);
-    applyLang();
-    // Re-render si une commande est affichée
-    const trackingId = new URLSearchParams(window.location.search).get('order');
-    if (trackingId) loadOrder(trackingId);
-  });
+document.getElementById('lang-select').addEventListener('change', (e) => {
+  currentLang = e.target.value;
+  localStorage.setItem('trackLang', currentLang);
+  applyLang();
+  // Re-render si une commande est affichée
+  const trackingId = new URLSearchParams(window.location.search).get('order');
+  if (trackingId) loadOrder(trackingId);
 });
 
 applyLang();
@@ -682,38 +875,64 @@ async function geocodeCity(city, country) {
 }
 
 // ===== PARCOURS SELON PAYS =====
+// Normalise un pays (nom FR/EN/local ou code) vers un code ISO2
+function normalizeCountry(country) {
+  const c = (country || '').trim().toLowerCase();
+  if (!c) return 'FR';
+  const map = {
+    'fr':'FR','france':'FR',
+    'de':'DE','germany':'DE','deutschland':'DE','allemagne':'DE',
+    'it':'IT','italy':'IT','italia':'IT','italie':'IT',
+    'no':'NO','norway':'NO','norge':'NO','norvege':'NO','norvège':'NO',
+    'se':'SE','sweden':'SE','sverige':'SE','suede':'SE','suède':'SE',
+    'dk':'DK','denmark':'DK','danmark':'DK','danemark':'DK',
+    'be':'BE','belgium':'BE','belgique':'BE',
+    'nl':'NL','netherlands':'NL','pays-bas':'NL','nederland':'NL',
+    'es':'ES','spain':'ES','espagne':'ES','espana':'ES','españa':'ES',
+    'ch':'CH','switzerland':'CH','suisse':'CH',
+    'at':'AT','austria':'AT','autriche':'AT'
+  };
+  if (map[c]) return map[c];
+  if (/^[a-z]{2}$/.test(c)) return c.toUpperCase();
+  return 'FR';
+}
+
+// Hubs par pays : ville de transit régionale + ville de dédouanement + transporteur last-mile
+const COUNTRY_HUBS = {
+  FR: { transit: ['Lyon', [45.7640, 4.8357]], customs: ['Roissy', [49.0097, 2.5479]], carrier: 'Colissimo' },
+  DE: { transit: ['Leipzig', [51.3397, 12.3731]], customs: ['Frankfurt', [50.1109, 8.6821]], carrier: 'DHL' },
+  IT: { transit: ['Verona', [45.4384, 10.9916]], customs: ['Milano', [45.4642, 9.1900]], carrier: 'Poste Italiane' },
+  NO: { transit: ['Göteborg', [57.7089, 11.9746]], customs: ['Oslo', [59.9139, 10.7522]], carrier: 'Posten Bring' },
+  SE: { transit: ['Malmö', [55.6050, 13.0038]], customs: ['Stockholm', [59.3293, 18.0686]], carrier: 'PostNord' },
+  DK: { transit: ['Hamburg', [53.5511, 9.9937]], customs: ['København', [55.6761, 12.5683]], carrier: 'PostNord' },
+  BE: { transit: ['Liège', [50.6326, 5.5797]], customs: ['Bruxelles', [50.8503, 4.3517]], carrier: 'bpost' },
+  NL: { transit: ['Eindhoven', [51.4416, 5.4697]], customs: ['Amsterdam', [52.3676, 4.9041]], carrier: 'PostNL' },
+  ES: { transit: ['Zaragoza', [41.6488, -0.8891]], customs: ['Madrid', [40.4168, -3.7038]], carrier: 'Correos' },
+  CH: { transit: ['Bern', [46.9480, 7.4474]], customs: ['Zürich', [47.3769, 8.5417]], carrier: 'Swiss Post' },
+  AT: { transit: ['Linz', [48.3069, 14.2858]], customs: ['Wien', [48.2082, 16.3738]], carrier: 'Österreichische Post' }
+};
+function hubFor(country) { return COUNTRY_HUBS[normalizeCountry(country)] || COUNTRY_HUBS.FR; }
+
 function getRoute(country, clientCity, clientCoords) {
   const t = translations[currentLang];
-  const isGermany = (country || '').toUpperCase().includes('DE') || 
-                    (country || '').toLowerCase().includes('german') ||
-                    (country || '').toLowerCase().includes('deutsch');
-  
+  const customsWord = { fr: 'Douane', de: 'Zoll', it: 'Dogana', no: 'Toll', sv: 'Tull', da: 'Told' }[currentLang] || 'Douane';
+  const hub = hubFor(country);
+
   const route = [
     { name: t.cities.istanbul, coords: [41.0082, 28.9784], step: 'transit' },
-    { name: t.cities.sofia, coords: [42.6977, 23.3219], step: 'transit' }
+    { name: t.cities.sofia, coords: [42.6977, 23.3219], step: 'transit' },
+    { name: hub.transit[0], coords: hub.transit[1], step: 'transit' },
+    { name: `${hub.customs[0]} (${customsWord})`, coords: hub.customs[1], step: 'customs' }
   ];
-  
-  if (isGermany) {
-    route.push({ name: t.cities.frankfurt, coords: [50.1109, 8.6821], step: 'customs' });
-  } else {
-    route.push({ name: t.cities.leipzig, coords: [51.3397, 12.3731], step: 'transit' });
-    route.push({ name: t.cities.karlsruhe, coords: [49.0069, 8.4037], step: 'customs' });
-  }
-  
+
   // Dernière étape : ville du client
   if (clientCoords) {
     route.push({ name: clientCity || t.yourCity, coords: clientCoords, step: 'delivered' });
   } else {
-    // Pas de coordonnées — ne pas afficher de fausse ville
-    // On met le dernier point connu (Karlsruhe/Frankfurt) comme fin de trajet visible
-    route.push({
-      name: t.yourCity,
-      coords: isGermany ? [51.0, 10.0] : [46.6, 2.5],  // Centre du pays (pas une ville)
-      step: 'delivered',
-      noMarker: true
-    });
+    // Pas de coordonnées — dernier point connu (dédouanement) comme fin de trajet visible
+    route.push({ name: t.yourCity, coords: hub.customs[1], step: 'delivered', noMarker: true });
   }
-  
+
   return route;
 }
 
@@ -721,15 +940,16 @@ function getRoute(country, clientCity, clientCoords) {
 // getBusinessDaysElapsed & calculateAutoStatus loaded from shared.js
 
 function getTruckPosition(status, route) {
-  // Mapping status -> index dans route
+  // Route = [Istanbul, Sofia, hub transit, hub douane, client]
+  const n = route.length;
   const statusToIndex = {
     confirmed: 0,
     processing: 0,
     shipped: 1,
-    transit: route.length === 5 ? 2 : 2, // Sofia ou Leipzig selon trajet
-    customs: route.length === 5 ? 2 : 3, // Frankfurt si DE, Karlsruhe si FR
-    approach: route.length - 2,
-    delivered: route.length - 1
+    transit: 2,
+    customs: 3,
+    approach: Math.max(0, n - 2),
+    delivered: n - 1
   };
   return statusToIndex[status] !== undefined ? statusToIndex[status] : 0;
 }
@@ -816,11 +1036,15 @@ async function renderOrder(order) {
 
   // Dernière mise à jour (updated_at ou order_date)
   const updatedAt = order.updated_at || order.order_date || order.created_at;
-  const lastUpdateStr = new Date(updatedAt).toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const lastUpdateStr = new Date(updatedAt).toLocaleDateString(({fr:'fr-FR',de:'de-DE',it:'it-IT',no:'nb-NO',sv:'sv-SE',da:'da-DK'}[currentLang] || 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   // Date de commande
-  const orderDateStr = new Date(order.order_date || order.created_at).toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  
+  const orderDateStr = new Date(order.order_date || order.created_at).toLocaleDateString(({fr:'fr-FR',de:'de-DE',it:'it-IT',no:'nb-NO',sv:'sv-SE',da:'da-DK'}[currentLang] || 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Transporteur last-mile selon le pays (affichage cosmétique uniquement)
+  const carrierLabel = { fr: 'Transporteur', de: 'Zusteller', it: 'Corriere', no: 'Transportør', sv: 'Transportör', da: 'Transportør' }[currentLang] || 'Transporteur';
+  const carrierName = hubFor(order.country).carrier;
+
   // Timeline
   const timelineKeys = ['confirmed', 'processing', 'transit', 'approach', 'delivered'];
   const statusOrder = ['confirmed', 'processing', 'shipped', 'transit', 'customs', 'approach', 'delivered'];
@@ -922,6 +1146,10 @@ async function renderOrder(order) {
           <div class="sidebar-section">
             <div class="sidebar-info">${t.shippedFromLabel}</div>
             <div class="sidebar-value" style="font-size:13px;">${t.shippedFromValue}</div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-info">${carrierLabel}</div>
+            <div class="sidebar-value">${carrierName}</div>
           </div>
           <div class="sidebar-section">
             <div class="sidebar-label">${t.stepsLabel}</div>

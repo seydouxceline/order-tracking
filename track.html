@@ -910,6 +910,17 @@ const COMMON_TRUNK = [
   ['Budapest', [47.4979, 19.0402]]
 ];
 
+// Villes dont le nom change selon la langue. Les autres (Istanbul, Sofia,
+// Budapest, Stuttgart, Lyon...) s'ecrivent pareil partout et ne sont pas listees.
+// Repli sur le nom brut si la ville ou la langue manque : jamais de case vide.
+const CITY_I18N = {
+  'Beograd': { fr:'Belgrade', de:'Belgrad', it:'Belgrado', no:'Beograd', sv:'Belgrad', da:'Beograd' },
+  'München': { fr:'Munich',   de:'München', it:'Monaco di Baviera', no:'München', sv:'München', da:'München' }
+};
+function villeAffichee(nom) {
+  return (CITY_I18N[nom] && CITY_I18N[nom][currentLang]) || nom;
+}
+
 // Hubs par pays : chaîne de villes (transit → ... → dédouanement) + transporteur last-mile.
 // La DERNIÈRE ville de `legs` = dédouanement (reçoit le libellé "Douane").
 const COUNTRY_HUBS = {
@@ -985,22 +996,9 @@ async function loadOrder(searchValue) {
   container.innerHTML = `<div class="loading">${t.loading}</div>`;
   
   try {
-    // On cherche d'abord par tracking_id, sinon par order_number
-    let { data, error } = await sb
-      .from('orders')
-      .select('*')
-      .eq('tracking_id', searchValue)
-      .maybeSingle();
-    
-    if (!data) {
-      const result = await sb
-        .from('orders')
-        .select('*')
-        .eq('order_number', searchValue)
-        .maybeSingle();
-      data = result.data;
-      error = result.error;
-    }
+    // Porte etroite : UNE commande par reference exacte, sans l'email client.
+    // La table n'est plus lisible directement (RLS) — tout passe par suivi().
+    let { data, error } = await sb.rpc('suivi', { q: searchValue });
     
     if (error || !data) {
       container.innerHTML = `<div class="error-msg">${t.notFound}</div>`;
@@ -1051,7 +1049,7 @@ async function renderOrder(order) {
   const daysElapsed = getBusinessDaysElapsed(order.order_date || order.created_at);
   const truckIdx = getTruckPosition(status, route, daysElapsed);
   // Ville où se trouve actuellement le colis (change au fil des semaines)
-  const currentCity = (route[truckIdx] && route[truckIdx].name) ? route[truckIdx].name : '';
+  const currentCity = (route[truckIdx] && route[truckIdx].name) ? villeAffichee(route[truckIdx].name) : '';
   const locLabel = { fr: 'Position actuelle', de: 'Aktueller Standort', it: 'Posizione attuale', no: 'Nåværende posisjon', sv: 'Aktuell position', da: 'Aktuel position' }[currentLang] || 'Position actuelle';
   const currentCityHTML = (status !== 'delivered' && currentCity)
     ? `<p class="current-loc">📍 ${locLabel} : ${currentCity}</p>` : '';

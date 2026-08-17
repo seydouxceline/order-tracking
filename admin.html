@@ -256,8 +256,10 @@ tbody tr:hover td { background: #fafafa; }
 <script>
 const SUPABASE_URL = 'https://fzmhrsjebncjuifzarqh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6bWhyc2plYm5janVpZnphcnFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDY4MTksImV4cCI6MjA5MjUyMjgxOX0.xn1K6keaUkgUrRZTKZRFvjU7eLa8mzqq5yg4T9Ct2hs';
-// Hash SHA-256 du mot de passe admin (pas visible en clair)
-const ADMIN_HASH = '96ea5911f7a9bcbf072434aef3bbe7eee218908bfef6f058fb918d38c1be328b';
+// Vrai login : Supabase Auth. Le jeton de session remplace la cle anon
+// dans les requetes — sans lui, la base (RLS) ne rend plus rien.
+const ADMIN_EMAIL = 'seydouxceline@gmail.com';
+let AUTH_TOKEN = sessionStorage.getItem('sb_access') || '';
 
 const STATUSES = [
   { value: 'confirmed',  label: '✓ Commande confirmée' },
@@ -297,12 +299,23 @@ async function hashPassword(pw) {
 
 async function checkLogin() {
   const pw = document.getElementById('pwInput').value;
-  const hash = await hashPassword(pw);
-  if (hash === ADMIN_HASH) {
-    sessionStorage.setItem('admin_auth', '1');
-    showAdmin();
-  } else {
-    document.getElementById('loginErr').textContent = 'Mot de passe incorrect.';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: pw })
+    });
+    const d = await r.json();
+    if (d.access_token) {
+      AUTH_TOKEN = d.access_token;
+      sessionStorage.setItem('sb_access', AUTH_TOKEN);
+      sessionStorage.setItem('admin_auth', '1');
+      showAdmin();
+    } else {
+      document.getElementById('loginErr').textContent = 'Mot de passe incorrect.';
+    }
+  } catch (e) {
+    document.getElementById('loginErr').textContent = 'Connexion impossible.';
   }
 }
 
@@ -319,7 +332,7 @@ function showAdmin() {
 }
 
 window.onload = () => {
-  if (sessionStorage.getItem('admin_auth') === '1') showAdmin();
+  if ((sessionStorage.getItem('admin_auth') && sessionStorage.getItem('sb_access')) === '1') showAdmin();
 };
 
 function switchTab(tab) {
@@ -351,7 +364,7 @@ async function createOrder() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
       method: 'POST',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ order_number, tracking_id, customer_name, customer_email, product_name, status: 'confirmed', auto_status: true, order_date: new Date().toISOString() })
     });
 
@@ -378,7 +391,7 @@ async function loadOrders() {
   let all = [], offset = 0;
   while (true) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?order=created_at.desc&limit=${PAGE}&offset=${offset}`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}` }
     });
     const batch = await res.json();
     all = all.concat(batch);
@@ -555,7 +568,7 @@ async function updateStatus(id, status) {
   // Modification manuelle -> on bascule en mode "manuel" (auto_status = false)
   await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
     method: 'PATCH',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, auto_status: false, updated_at: new Date().toISOString() })
   });
   loadOrders();
@@ -565,7 +578,7 @@ async function resetToAuto(id) {
   if (!confirm('Repasser cette commande en mode automatique ? Le statut sera recalculé selon la date de commande.')) return;
   await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
     method: 'PATCH',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ auto_status: true, updated_at: new Date().toISOString() })
   });
   loadOrders();
@@ -580,7 +593,7 @@ async function deleteOrder(id, orderNum) {
   if (!confirm(`Supprimer la commande #${orderNum} ? Cette action est irréversible.`)) return;
   await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
     method: 'DELETE',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}` }
   });
   loadOrders();
 }
@@ -619,10 +632,10 @@ function exportCSV() {
 async function loadRefunds() {
   const [refundsRes, ordersRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/refunds?order=created_at.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}` }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/orders?select=order_number,order_date,created_at`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}` }
     })
   ]);
   
@@ -708,7 +721,7 @@ function renderRefunds(refunds) {
 async function updateRefundStatus(id, status) {
   await fetch(`${SUPABASE_URL}/rest/v1/refunds?id=eq.${id}`, {
     method: 'PATCH',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${AUTH_TOKEN || SUPABASE_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ refund_status: status })
   });
   loadRefunds();

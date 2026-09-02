@@ -1235,9 +1235,12 @@ function initMap(route, truckIdx, status) {
     attributionControl: true
   });
   
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+  map.attributionControl.setPrefix(false);
+  
+  // Fond gris clair Esri (sans cle API). CARTO imprimait "API KEY REQUIRED" sans cle.
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16,
+    attribution: '&copy; Esri'
   }).addTo(map);
   
   // Trace ligne du parcours

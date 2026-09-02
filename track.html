@@ -187,6 +187,7 @@ body {
 }
 
 #map { height: 480px; }
+.leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,.7); }
 @media (max-width: 768px) { #map { height: 320px; } }
 
 .sidebar {
@@ -1231,11 +1232,12 @@ function initMap(route, truckIdx, status) {
     zoomControl: false, 
     scrollWheelZoom: false,
     dragging: true,
-    attributionControl: false
+    attributionControl: true
   });
   
-  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-    maxZoom: 18
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
   }).addTo(map);
   
   // Trace ligne du parcours
